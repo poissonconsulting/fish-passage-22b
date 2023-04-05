@@ -7,4 +7,8 @@ if(FALSE) {
   source("remove-main.R")
 }
 
+source("read-data.R")
+source("clean-data.R")
+source("tidy-data.R")
+
 source("session-info.R")
