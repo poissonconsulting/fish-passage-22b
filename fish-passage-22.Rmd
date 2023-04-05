@@ -1,0 +1,121 @@
+---
+title: "fish-passage 2022"
+author: "Thorley, J.L., Irvine, R.L., Dalgarno, S., Amies-Galonski, E.C., Pearson, A.D., Hussein N. & Kortello, A."
+bibliography: bibliography.bib
+---
+  
+```{r, echo = FALSE, warning = FALSE, message = FALSE, include = FALSE, cache = FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = FALSE, comment = NA, results = "asis", cache = FALSE)
+
+source("header.R")
+library(poisreport)
+
+nheaders <- 2L
+
+rename <- c(
+  "map" = "Maps" # to avoid rendering problems!
+)
+
+sort <- c(
+  "description", "coef", "glance", "map",
+  "sensitivity", "sensitivity_parameter", "sensitivity_term"
+)
+
+drop <- NULL
+```
+
+```{r}
+cat(report_draft())
+```
+
+The suggested citation for this [analytic appendix](https://www.poissonconsulting.ca/analytic-appendices.html) is:
+  
+```{r}
+cat(report_citation(file_name()))
+```
+
+## Background
+
+The primary goal of the current analyses is to answer the following questions:
+  
+  > Is y affected by x?
+  
+### Data Preparation
+  
+The data were prepared for analysis using `r substr(R.version.string,1,15)` [@r_core_team_r_2022].
+
+Key assumptions of the data preparation included:
+  
+- The data were recorded correctly.
+
+### Statistical Analysis
+
+Model parameters were estimated using Bayesian methods.
+The estimates were produced using JAGS [@plummer_jags:_2003] and STAN [@carpenter_stan_2017].
+For additional information on Bayesian estimation the reader is referred to @mcelreath_statistical_2020.
+
+Unless stated otherwise, the Bayesian analyses used weakly informative normal and half-normal prior distributions [@gelman_prior_2017].
+The posterior distributions were estimated from `r getOption("mb.nchains", 3L) * getOption("mb.niters", 500L) ` Markov Chain Monte Carlo (MCMC) samples thinned from the second halves of `r getOption("mb.nchains", 3L)` chains [@kery_bayesian_2011, pp. 38-40].
+Model convergence was confirmed by ensuring that the potential scale reduction factor $\hat{R} \leq `r round(getOption("mb.rhat", 1.05), 2)`$ [@kery_bayesian_2011, pp. 40] and the effective sample size [@brooks_handbook_2011] $\textrm{ESS} \geq  `r getOption("mb.nchains", 3L) * getOption("mb.niters", 500) * round(getOption("mb.esr", 0.1), 2)`$ for each of the monitored parameters [@kery_bayesian_2011, pp. 61].
+
+Model adequacy was assessed via posterior predictive checks [@kery_bayesian_2011].
+More specifically, the proportion of zeros in the data and the first four central moments (mean, variance, skewness and kurtosis) in the deviance residuals were compared to the expected values by simulating new data based on the posterior distribution and assumed sampling distribution and calculating the deviance residuals.
+
+Where computationally practical, the sensitivity of the posteriors to the choice of prior distributions was evaluated by increasing the standard deviations of all normal, half-normal and log-normal priors by an order of magnitude and then using $\hat{R}$ to evaluate whether the samples were drawn from the same posterior distribution [@thorley_fishing_2017].
+
+The parameters are summarised in terms of the point *estimate*, *lower* and *upper* 95% compatibility limits [@rafi_semantic_2020] and the surprisal *s-value* [@greenland_valid_2019].
+The estimate is the median (50th percentile) of the MCMC samples while the 95% CLs are the 2.5th and 97.5th percentiles.
+The s-value indicates how surprising it would be to discover that the true value of the parameter is in the opposite direction to the estimate [@greenland_valid_2019].
+An s-value of $>$ 4.32 bits, which is equivalent to a p-value $<$ 0.05 [@kery_bayesian_2011; @greenland_living_2013], indicates that the surprise would be equivalent to throwing at least 4.3 heads in a row.
+
+Model selection was based on the pointwise out-of-sample predictive accuracy [@mcelreath_statistical_2020] or the heuristic of directional certainty [@kery_bayesian_2011].
+In the first instance, alternative models were compared using Leave-one-out cross-validation (LOO-CV) as implemented using the Pareto-smoothed importance sampling (PSIS) algorithm [@vehtari_practical_2017]. 
+LOO-CV is asymptotically equal to the Widely Applicable Information Criterion [WAIC, @watanabe_asymptotic_2010, @watanabe_widely_2013].
+Model weights ($w_i$) were based on $\exp(-0.5 \Delta_i)$ as proposed by @akaike_likelihood_1978 for Akaike Information Criterion (AIC) and by @watanabe_asymptotic_2010 for WAIC where $\Delta_i$ is the absolute difference in the out-of-sample predictive density of the $i$th model relative to the best model [@burnham_model_2002].
+In the second instance fixed effects were included if their s-value was $>$ 4.32 bits [@kery_bayesian_2011].
+Based on a similar argument, random effects were included if their standard deviation had lower 95% CLs $>$ 5% of the estimate.
+
+The results are displayed graphically by plotting the modeled relationships between individual variables and the response with the remaining variables held constant.
+In general, continuous and discrete fixed variables are held constant at their mean and first level values, respectively, while random variables are held constant at their average values (expected values of the underlying hyperdistributions) [@kery_bayesian_2011, pp. 77-82].
+Primary explanatory variables are evaluated based on their estimated effect sizes with 95% CLs [@bradford_using_2005]
+
+The analyses were implemented using `r substr(R.version.string,1,15)` [@r_core_team_r_2022] and the [`mbr`](https://www.poissonconsulting.ca/mbr) family of packages.
+
+### Model Descriptions
+
+#### Model
+
+The data were analysed using a model.
+Key assumptions of the model include:
+  
+- The residual variation is normally distributed.
+
+### Model Templates
+
+```{r}
+cat(sbr_blocks(sort = sort, rename = rename, nheaders = nheaders, drop = drop))
+```
+
+## Results
+
+### Tables
+
+```{r}
+cat(sbr_tables(sort = sort, rename = rename, nheaders = nheaders, drop = drop))
+```
+
+### Figures
+
+```{r}
+cat(sbr_figures(sort = sort, rename = rename, nheaders = nheaders, drop = drop))
+```
+
+## Acknowledgements
+
+The organisations and individuals whose contributions have made this analytic appendix possible include:
+  
+- A Company
+  - FirstName LastName
+- FirstName LastName
+
+## References
