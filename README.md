@@ -1,3 +1,15 @@
 # fish-passage-22
 
-![Energy](energy.png?raw=true "Energy")
+## Discharge
+
+### Simple
+![discharge_1](energy.png?raw=true "Simple Discharge")
+
+### Intermediate
+![discharge_2](energy.png?raw=true "Intermediate Discharge")
+
+### Complex
+![discharge_3](energy.png?raw=true "Complex Discharge")
+
+## Energy
+![energy](energy.png?raw=true "Energy")
