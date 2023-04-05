@@ -7,6 +7,8 @@ if(FALSE) {
   source("remove-main.R")
 }
 
+source("read-flow-diagrams.R")
+
 source("read-data.R")
 source("clean-data.R")
 source("tidy-data.R")
@@ -19,5 +21,7 @@ source("populate-database.R")
 source("session-info.R")
 
 if(FALSE) {
+  source("knit-report.R")
+  source("session-info.R")
   source("archive-database.R")
 }
