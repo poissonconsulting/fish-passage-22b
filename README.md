@@ -3,13 +3,13 @@
 ## Discharge
 
 ### Simple
-![discharge_1](energy.png?raw=true "Simple Discharge")
+![discharge_1](discharge_1.png?raw=true "Simple Discharge")
 
 ### Intermediate
-![discharge_2](energy.png?raw=true "Intermediate Discharge")
+![discharge_2](discharge_2.png?raw=true "Intermediate Discharge")
 
 ### Complex
-![discharge_3](energy.png?raw=true "Complex Discharge")
+![discharge_3](discharge_3.png?raw=true "Complex Discharge")
 
 ## Energy
 ![energy](energy.png?raw=true "Energy")
