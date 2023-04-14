@@ -8,6 +8,7 @@ if(FALSE) {
 }
 
 source("read-flow-diagrams.R")
+source("read-dags.R")
 
 source("read-data.R")
 source("clean-data.R")
