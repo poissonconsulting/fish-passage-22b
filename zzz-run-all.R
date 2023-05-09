@@ -14,7 +14,13 @@ source("read-data.R")
 source("clean-data.R")
 source("tidy-data.R")
 
-source("copy-database.R")
+# .ssn object for SSN and SSNbayes 
+source("read-elev.R")
+source("get-ssn.R") # takes > 1 day 
+# source("ssnbayes.R")
+
+source("plot-water-temp.R")
+
 source("import-database.R")
 source("create-database.R")
 source("populate-database.R")
