@@ -1,9 +1,15 @@
 source("header.R")
 
-sbf_set_sub("clean", sub = "data")
+sbf_set_sub("clean")
 sbf_load_datas()
 
-sbf_set_sub("tidy", sub = "data", rm = TRUE)
+# Water temp ----
+
+
+# Air temp ----
+
+
+sbf_set_sub("tidy", rm = TRUE)
 sbf_save_datas()
 
 if(FALSE) {
