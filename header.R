@@ -22,5 +22,11 @@ rm(list = ls())
 graphics.off()
 
 source("functions.R")
+library(ncdf4)
+library(tidync)
 
 dir <- "~/Poisson/Data/fish-passage/2022"
+crs <- 3005 # BC Albers
+
+tz_data <- "UTC"
+tz_analysis <- "Etc/GMT+8"
