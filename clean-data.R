@@ -21,8 +21,9 @@ water_temp %<>%
   mutate(date_time = dtt_adjust_tz(date_time, tz = tz_analysis)) %>% 
   select(site, date_time, temp, flag)
 
-water_temp_meta %<>%
-  drop_na() %>%
+colnames(water_temp_meta_data) <- "meta"
+
+water_temp_meta_data %<>%
   mutate(
     meta_row = str_detect(meta, "Metadata"),
     site_name_row = lead(meta_row),
@@ -44,7 +45,12 @@ water_temp_meta %<>%
   ) %>%
   mutate(
     site = str_extract(site, "[[:alpha:]]{3}"),
-    site_description = str_to_title(site_description)
+    site_description = str_to_title(site_description),
+    meta = if_else2(
+      site == "MTL" & meta_row, 
+      "Metadata: (54° 52' 45.4\" N, 125° 08' 32.4\" W; 716 m; 7/17/2020 - 6/29/2021)",
+      meta
+    )
   ) %>%
   select(
     site, site_description, meta, meta_row, site_name_row, site_visit_row, 
@@ -52,7 +58,7 @@ water_temp_meta %<>%
   )
 
 water_temp_site <-
-  water_temp_meta %>%
+  water_temp_meta_data %>%
   filter(meta_row) %>%
   select(site, site_description, meta) %>%
   mutate(
@@ -96,7 +102,7 @@ sites <-
 st_write(sites, "output/objects/ssn/site.shp", append = FALSE)
 
 water_temp_visit <- 
-  water_temp_meta %>%
+  water_temp_meta_data %>%
   filter(site_visit_row) %>%
   select(site, meta) %>%
   mutate(
@@ -140,7 +146,7 @@ water_temp_visit <-
   select(site, date_visit, date_time_logger_removed, date_time_logger_returned)
 
 water_temp_notes <- 
-  water_temp_meta %>%
+  water_temp_meta_data %>%
   filter(note_row) %>%
   group_by(site) %>%
   summarize(comment = paste(meta, collapse = " "), .groups = "keep") %>%
