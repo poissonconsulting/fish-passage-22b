@@ -19,6 +19,13 @@ source("plot-water-temp.R")
 source("create-database.R")
 source("populate-database.R")
 
+source("manipulate-temperature.R")
+source("dag-temperature.R")
+source("analyse-temperature.R")
+source("predict-temperature.R")
+source("residuals-temperature.R")
+source("sensitivity-temperature.R")
+
 if(FALSE) {
   source("knit-report.R")
   source("session-info.R")
