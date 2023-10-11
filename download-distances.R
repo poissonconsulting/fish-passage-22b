@@ -8,7 +8,7 @@ points <-
   group_by(site) %>% 
   group_split() %>% 
   map(
-    .f = \(x) fwa_index_point(x$lon, x$lat, tolerance = 100) %>% # Low tolerance
+    .f = \(x) fwa_index_point(x$Longitude, x$Latitude, tolerance = 100) %>% # Low tolerance
       mutate(site = x$site)
   ) %>% 
   do.call(rbind, .) %>% 
@@ -618,6 +618,7 @@ for (base in 1:nsites) {
 
 total_hydrologic_distance <- 
   downstream_hydrologic_distance + t(downstream_hydrologic_distance)
+
 
 
 # n_segments <- 
