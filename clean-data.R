@@ -93,6 +93,9 @@ water_temp_site <-
     site, site_description, elev, Latitude, Longitude, start_date, end_date
   )
 
+sites_long_lat <- water_temp_site %>% 
+  select(site, Latitude, Longitude)
+
 sites <- 
   water_temp_site %>%
   ps_longlat_to_sfc() %>%
@@ -319,7 +322,7 @@ gp <- ggplot(air_temp, aes(x = date, y = mean_temp)) +
 sbf_open_window()
 sbf_print(gp)
 
-rm(sites, air_temp_geom, site_to_temp)
+rm(air_temp_geom, site_to_temp)
 
 sbf_save_datas()
 
