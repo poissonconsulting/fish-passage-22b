@@ -499,17 +499,17 @@ ggplot() +
   NULL
 
 
-i <- 7
-connectivity_ps %>% 
-  filter(base == rownames(flow_unconnected)[i]) %>% 
-  filter(upstream) %>% 
-  ps_activate_sfc(sfc_name = "x") %>% 
-  ggplot() +
-  geom_sf(data = segments, aes(color = segment_id)) +
-  geom_sf(data = network_intersection_points, size = 0.3) +
-  geom_sf() +
-  geom_sf(data = points %>% filter(site == rownames(flow_unconnected)[i]), aes(colour = "red"), size = 0.1) + 
-  NULL
+# i <- 7
+# connectivity_ps %>% 
+#   filter(base == rownames(flow_unconnected)[i]) %>% 
+#   filter(upstream) %>% 
+#   ps_activate_sfc(sfc_name = "x") %>% 
+#   ggplot() +
+#   geom_sf(data = segments, aes(color = segment_id)) +
+#   geom_sf(data = network_intersection_points, size = 0.3) +
+#   geom_sf() +
+#   geom_sf(data = points %>% filter(site == rownames(flow_unconnected)[i]), aes(colour = "red"), size = 0.1) + 
+#   NULL
 
 # upstream_segments <- 
 #   connectivity %>% 
