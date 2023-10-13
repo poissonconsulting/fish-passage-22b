@@ -8,23 +8,11 @@ points <-
   group_by(site) %>% 
   group_split() %>% 
   map(
-    .f = \(x) fwa_index_point(x$Longitude, x$Latitude, tolerance = 100) %>% # Low tolerance
+    .f = \(x) fwa_index_point(x$Longitude, x$Latitude, tolerance = 250) %>% # Low tolerance
       mutate(site = x$site)
   ) %>% 
   do.call(rbind, .) %>% 
   filter(!site == "SLS") # SLS site located on a spillway, not in stream network.
-
-# Long/Lat from Wikipedia
-# outlet <- tibble(
-#   lat = 53.91722,
-#   lon = -122.7147
-# )
-# 
-# outlet_point <- fwa_index_point(x = outlet$lon, y = outlet$lat)
-# outlet_point
-
-# Need stream network connecting all (?) sites, with segments splitting at confluences
-# Need lengths of each segment, and need to know which segments are upstream of others
 
 # Get this programatically
 stream_network_names <- as.list(c(
@@ -96,41 +84,6 @@ stream_network_detail_list <- map(
 
 stream_network_detail <- st_sf(do.call(rbind, stream_network_detail_list))
 
-# Union the linestrings in a given wscode_ltree.
-# network_unioned <- 
-#   stream_network_detail %>%
-#   group_by(wscode_ltree) %>%
-#   group_split(.keep = TRUE) %>% 
-#   map(
-#   .x = .,
-#   .f = \(x) {
-#     val <- st_union(x)
-#     if (inherits(val, "sfc_MULTILINESTRING")) {
-#       val <- st_line_merge(val)
-#     }
-#     val <- st_cast(val, to = "LINESTRING")
-#     val <- st_as_sf(val)
-#     val$wscode_ltree <- x$wscode_ltree[1]
-#     val$downstream_route_measure <- min(x$downstream_route_measure)
-#     val
-#   }
-# ) %>%
-#   do.call(rbind, .)
-# 
-# network_unioned <- 
-#   network_unioned %>%
-#   group_by(wscode_ltree, downstream_route_measure) %>%
-#   mutate(id = 1:n()) %>% 
-#   ### Remove the long side channel on the nechako 
-#   filter(!(wscode_ltree == "100.567134" & id == 2)) %>% 
-#   ungroup() %>% 
-#   select(-id)
-
-### Remove the side channel of the Nechako
-# stream_network_detail <- 
-#   stream_network_detail %>% 
-#   filter(!(wscode_ltree == "100.567134" & stream_order_parent == 7))
-
 network_unioned <-
   stream_network_detail %>%
   mutate(
@@ -193,8 +146,6 @@ ggplot() +
   geom_sf(data = network_intersection_points) +
   NULL
 
-# Rn the network still has the secondary paths; planning on using river metres for distances so it shouldn't matter.
-
 # Remove the secondary lines to get the segments as single lines
 network_unioned <-
   stream_network_detail %>%
@@ -239,9 +190,8 @@ wscode_ltree_network <-
   select(wscode_ltree) %>%
   mutate(origins = 1:n())
 
-network_intersection_points <-
+network_intersection_points_all <-
   st_intersection(network_unioned) %>% 
-  # filter(n.overlaps > 1) %>% 
   unnest(origins) %>% 
   left_join(
     wscode_ltree_network,
@@ -265,19 +215,39 @@ network_intersection_points <-
       wscode_ltree.x,
       wscode_ltree.y
     )
-  ) %>%
+  ) %>% 
+  arrange(localcode_ltree) %>%
+  group_by(geometry) %>% 
+  arrange(downstream_route_measure, .by_group = TRUE) %>% 
+  mutate(id = cur_group_id()) %>% 
+  ungroup()
+
+network_intersection_points <- 
+  network_intersection_points_all %>%
   # keep the point on the mainstem
   group_by(x, y) %>%
-  arrange(downstream_route_measure, .by_group = TRUE) %>%
-  mutate(group_number = cur_group_id()) %>% 
   slice_tail() %>% 
-  ungroup() %>% 
-  arrange(localcode_ltree) %>%
-  mutate(id = 1:n())
+  ungroup()
+
+# Get stream outlet 
+outlet <- 
+  network_unioned %>% 
+  slice_min(localcode_ltree) %>% 
+  slice_min(downstream_route_measure) %>% 
+  st_cast("POINT") %>%
+  slice(1)
+
+# Add outlet to the intersection points
+network_intersection_points_all %<>% 
+  bind_rows(
+    outlet_point %>% 
+      rename(x = wscode_ltree) %>% 
+      mutate(id = max(network_intersection_points_all$id) + 1)
+  )
 
 ggplot() +
   geom_sf(data = network_unioned, aes(colour = wscode_ltree)) +
-  geom_sf(data = network_intersection_points, size = 0.3) +
+  geom_sf(data = network_intersection_points_all, size = 0.3) +
   geom_sf(data = points, colour = "red", size = 0.3) +
   NULL
 
@@ -299,23 +269,24 @@ segments_mainstems <-
           ),
           segments = cumsum(split_point) + 1,
           segment_id = paste0(x$x[1], ".0000S", segments)
-      ) 
+        )
       y
     }
   ) %>% 
   do.call(rbind, .)
 
+upper_tribs <- network_unioned %>% 
+  filter(!(wscode_ltree %in% unique(segments_mainstems$wscode_ltree))) %>% 
+  group_by(wscode_ltree) %>%
+  mutate(
+    segments = 1,
+    segment_id = paste0(wscode_ltree, ".0000S", segments)
+  )
 
 all_segments <- 
-  segments_mainstems %>% 
   bind_rows(
-    network_unioned %>% 
-      filter(!(wscode_ltree %in% unique(segments_mainstems$wscode_ltree))) %>% 
-      group_by(wscode_ltree) %>%
-      mutate(
-        segments = 1,
-        segment_id = paste0(wscode_ltree, ".0000S", segments)
-      )
+    segments_mainstems,
+    upper_tribs
   )
 
 segments <- 
@@ -349,6 +320,19 @@ segments <-
   do.call(rbind, .) %>% 
   arrange(segment_id)
 
+segments <- 
+  segments %>% 
+  st_join(
+    network_intersection_points_all %>% 
+      select(confluence_id = id, point_drm = downstream_route_measure),
+    join = st_is_within_distance,
+    dist = 10
+  ) %>% 
+  group_by(segment_id) %>% 
+  arrange(segment_id, point_drm, .by_group = TRUE) %>%
+  slice_head() %>% 
+  select(-point_drm)
+
 ggplot() +
   geom_sf(data = segments, aes(colour = fct_shuffle(segment_id))) +
   geom_sf(data = network_intersection_points, size = 0.3) +
@@ -357,28 +341,35 @@ ggplot() +
 
 # Copy Simon's logic from 
 # https://github.com/smnorris/fwapg/blob/main/sql/functions/FWA_Upstream.sql
+# Is b upstream of a?
 fwa_upstream <- function(a, b) {
   ws_a <- a$wscode_ltree
   ws_b <- b$wscode_ltree
   lc_a <- a$localcode_ltree
   lc_b <- b$localcode_ltree
+  rm_a <- a$downstream_route_measure
+  rm_b <- b$downstream_route_measure
   
   bol_1 <- ws_a == lc_a & str_detect(ws_b, ws_a) & str_detect(lc_b, lc_a)
   bol_2 <- ws_a != lc_a & str_detect(ws_b, ws_a)
   bol_3 <- ws_b > lc_a & !(str_detect(ws_b, lc_a)) & str_detect(ws_b, ws_a) & lc_b > lc_a
   bol_4 <- ws_b == ws_a & lc_b >= lc_a
+  bol_5 <- ws_a == ws_b & lc_a == lc_b & rm_b > rm_a
 
-  upstream <- bol_1 | (bol_2 & (bol_3 | bol_4))
+  upstream <- bol_1 | (bol_2 & (bol_3 | bol_4)) | bol_5
   upstream
 }
 
 # Likewise for downstream function
 # https://github.com/smnorris/fwapg/blob/main/sql/functions/FWA_Downstream.sql
+# Is b downstream of a?
 fwa_downstream <- function(a, b) {
   ws_a <- a$wscode_ltree
   ws_b <- b$wscode_ltree
   lc_a <- a$localcode_ltree
   lc_b <- b$localcode_ltree
+  rm_a <- a$downstream_route_measure
+  rm_b <- b$downstream_route_measure
   
   bol_1 <- str_detect(ws_a, ws_b)
   # Local code of a is bigger than local code of b at given level.
@@ -388,8 +379,9 @@ fwa_downstream <- function(a, b) {
     paste0(collapse = ".")
   bol_2 <- pattern > lc_b
   bol_3 <- ws_b == lc_b & ws_a != ws_b
+  bol_4 <-  ws_a == ws_b & lc_a == lc_b & rm_b < rm_a
   
-  downstream <- bol_1 & (bol_2 | bol_3)
+  downstream <- (bol_1 & (bol_2 | bol_3)) | bol_4
   downstream
 }
 
@@ -438,7 +430,7 @@ colnames(flow_connected) <- points$site
 
 for (i in 1:nsites) {
   for (j in 1:nsites) {
-    flow_connected[i, j] <- connectivity$flow_connected[connectivity$base == points$site[i] & connectivity$compare == points$site[j]]
+    flow_connected[j, i] <- connectivity$flow_connected[connectivity$base == points$site[i] & connectivity$compare == points$site[j]]
   }
 }
 
@@ -449,28 +441,9 @@ colnames(downstream) <- points$site
 
 for (i in 1:nsites) {
   for (j in 1:nsites) {
-    downstream[i, j] <- connectivity$downstream[connectivity$base == points$site[i] & connectivity$compare == points$site[j]]
+    downstream[j, i] <- connectivity$downstream[connectivity$base == points$site[i] & connectivity$compare == points$site[j]]
   }
 }
-
-# id <- 1
-# ggplot() +
-#   geom_sf(data = network_unioned, aes(color = wscode_ltree)) +
-#   geom_sf(data = points %>% 
-#             left_join(
-#               tibble(
-#                 site = rownames(flow_unconnected),
-#                 flow_unconnected = flow_unconnected[, id]
-#               ), 
-#               join_by(site)
-#             ),
-#           aes(shape = flow_unconnected)
-#           ) +
-#   geom_sf(data = points %>% filter(site == rownames(flow_unconnected)[id]), aes(color = "red")) +
-#   NULL
-
-## Run segments code
-# Get all segments downstream of a site, not including that site
 
 ### Connectivity - points/segments
 connectivity_ps <- 
@@ -498,48 +471,33 @@ ggplot() +
   geom_sf(data = points, colour = "red", size = 0.3) +
   NULL
 
-
-# i <- 7
-# connectivity_ps %>% 
-#   filter(base == rownames(flow_unconnected)[i]) %>% 
-#   filter(upstream) %>% 
-#   ps_activate_sfc(sfc_name = "x") %>% 
-#   ggplot() +
-#   geom_sf(data = segments, aes(color = segment_id)) +
-#   geom_sf(data = network_intersection_points, size = 0.3) +
-#   geom_sf() +
-#   geom_sf(data = points %>% filter(site == rownames(flow_unconnected)[i]), aes(colour = "red"), size = 0.1) + 
-#   NULL
-
-# upstream_segments <- 
-#   connectivity %>% 
-#   group_by(base) %>% 
-#   filter(upstream) %>% 
-#   do(segments = as.vector(t(.$compare))) %>% 
-#   ungroup() %>% 
-#   rename(segment_id = base)
-# 
-# connectivity %<>% 
-#   left_join(upstream_segments, by = c("base" = "segment_id")) %>%
-#   rename(segments_base = segments) %>% 
-#   left_join(upstream_segments, by = c("compare" = "segment_id")) %>%
-#   rename(segments_compare = segments) %>% 
-#   rowwise() %>% 
-#   mutate(
-#     intersecting_segments = length(intersect(segments_base, segments_compare)),
-#     flow_connected = if_else(intersecting_segments != 0, TRUE, FALSE),
-#     flow_unconnected = if_else(intersecting_segments == 0, TRUE, FALSE)
-#   ) %>% 
-#   ungroup() %>% 
-#   select(base, compare, upstream, downstream, flow_connected, flow_unconnected)
-
-
 downstream_hydrologic_distance <- matrix(NA, nsites, nsites)
 diag(downstream_hydrologic_distance) <- 0
 rownames(downstream_hydrologic_distance) <- points$site
 colnames(downstream_hydrologic_distance) <- points$site
 
-### TODO: Make some tests for this to test the logic.
+
+### Add segment_id to points
+points %<>% 
+  rowwise() %>% 
+  group_split() %>% 
+  map(
+    .f = \(x) {
+      wscode <- x$wscode_ltree
+      ds_rm <- x$downstream_route_measure
+      x$segment_id <- 
+        segments %>% 
+        as_tibble() %>% 
+        filter(wscode_ltree == wscode) %>%
+        filter(
+          ds_rm >= downstream_route_measure &
+            ds_rm <= upstream_route_measure
+        ) %>% 
+        pull(segment_id)
+      x
+    }
+  ) %>% 
+  do.call(rbind, .)
 
 for (base in 1:nsites) {
   for (compare in 1:nsites) {
@@ -549,7 +507,7 @@ for (base in 1:nsites) {
       # E.g. base = NMI (12), compare = NCC (11)
       if (points$wscode_ltree[compare] == points$wscode_ltree[base]) {
         downstream_hydrologic_distance[compare, base] <- 
-          points$downstream_route_measure[compare] - points$downstream_route_measure[base]
+          points$downstream_route_measure[base] - points$downstream_route_measure[compare]
       } else {
         # If they don't have the same wscode_ltree, 
         # Add downstream rm of base
@@ -558,35 +516,48 @@ for (base in 1:nsites) {
         compare_segment <- rownames(flow_connected)[compare]
         base_segment <- rownames(flow_connected)[base]
         
+        downstream_of_base <- 
+          connectivity_ps %>% 
+          filter(base == base_segment) %>% 
+          filter(downstream) %>% 
+          select(segment_id = compare, upstream_route_measure, downstream_route_measure) %>% 
+          mutate(segment_length = upstream_route_measure - downstream_route_measure) %>%
+          summarize(length = sum(segment_length)) %>% 
+          pull(length)
+        
         downstream_of_compare <- 
           connectivity_ps %>% 
           filter(base == compare_segment) %>%
           filter(downstream) %>% 
-          select(segment_id = compare, upstream_route_measure) 
+          select(segment_id = compare, upstream_route_measure, downstream_route_measure) %>% 
+          mutate(segment_length = upstream_route_measure - downstream_route_measure) %>%
+          summarize(length = sum(segment_length)) %>% 
+          pull(length)
         
-        upstream_of_base <- 
-          connectivity_ps %>% 
-          filter(base == base_segment) %>% 
-          filter(upstream) %>% 
-          select(segment_id = compare, upstream_route_measure)
-        
-        intermediate_segments <- 
-          inner_join(
-            downstream_of_compare,
-            upstream_of_base,
-            join_by(segment_id, upstream_route_measure)
-          )
+        dist_upstream_of_confluence <- 
+          points %>% 
+          filter(site == compare_segment) %>% 
+          left_join(
+            segments %>% 
+              as_tibble() %>% 
+              select(segment_id, seg_drm = downstream_route_measure), 
+            join_by(segment_id)
+          ) %>% 
+          mutate(
+            dist_upstream_of_confluence = downstream_route_measure - seg_drm
+          ) %>% 
+          pull(dist_upstream_of_confluence)
         
         downstream_hydrologic_distance[compare, base] <- 
-          points$downstream_route_measure[compare] + 
-          sum(intermediate_segments$upstream_route_measure) -
-          points$downstream_route_measure[base]
+          points$downstream_route_measure[base] + 
+          downstream_of_base -
+          downstream_of_compare -
+          dist_upstream_of_confluence
       } 
     } else if (flow_connected[compare, base]) {
       downstream_hydrologic_distance[compare, base] <- 0
     } else {
       # Distance to common confluence (network intersection point) 
-      # E.g. CSC (2) and CNR (1)
       compare_segment <- rownames(flow_connected)[compare]
       base_segment <- rownames(flow_connected)[base]
       
@@ -603,204 +574,137 @@ for (base in 1:nsites) {
         select(segment_id = compare, downstream_route_measure, upstream_route_measure)
       
       downstream_dist_to_cc <- 
-        downstream_of_compare %>% 
-        anti_join(downstream_of_base, join_by(segment_id, upstream_route_measure)) %>% 
+        downstream_of_base %>% 
+        anti_join(downstream_of_compare, join_by(segment_id, upstream_route_measure)) %>% 
         mutate(
           segment_length = upstream_route_measure - downstream_route_measure
         )
       
+      dist_upstream_of_confluence <- 
+        points %>% 
+        filter(site == base_segment) %>% 
+        left_join(
+          segments %>% 
+            as_tibble() %>% 
+            select(segment_id, seg_drm = downstream_route_measure), 
+          join_by(segment_id)
+        ) %>% 
+        mutate(
+          dist_upstream_of_confluence = downstream_route_measure - seg_drm
+        ) %>% 
+        select(downstream_route_measure, seg_drm, dist_upstream_of_confluence) %>%
+        pull(dist_upstream_of_confluence)
+
       downstream_hydrologic_distance[compare, base] <- 
-        points$downstream_route_measure[compare] + 
+        dist_upstream_of_confluence + 
         sum(downstream_dist_to_cc$segment_length)
     }
   }
 }
-
+  
 total_hydrologic_distance <- 
   downstream_hydrologic_distance + t(downstream_hydrologic_distance)
 
+# Get cumulative watershed area from a point near the bottom of each segment
+# Not the intersection point itself, because that would include upstream areas of both tribs
+# The point 10% upstream from the confluence seems to work best to get the correct areas
+# Checked by plotting
+# Segment 11 (100.567134.179319.0000S2) had some strange behaviour with this method
+# So taking its 7th point.
 
+segments %<>% 
+  rowwise() %>% 
+  group_split() %>% 
+  map(
+    .f = \(x) {
+      seg_point <- st_cast(x, to = "POINT") %>% 
+        slice(if_else2(nrow(.) >= 10, round(0.1 * nrow(.)), 1)) %>%
+        ps_sfc_to_longlat() %>% 
+        suppressWarnings()
+      if (x$segment_id == "100.567134.179319.0000S2") {
+        seg_point <- st_cast(x, to = "POINT") %>% 
+          slice(7) %>%
+          ps_sfc_to_longlat() %>% 
+          suppressWarnings()
+      }
+      area <- hydroshed(seg_point$Longitude, seg_point$Latitude) %>% 
+        st_area()
+      x$area <- area
+      x
+    }
+  ) %>% 
+  do.call(rbind, .)
 
-# n_segments <- 
-#   segments %>%
-#   distinct(segment_id) %>% 
-#   nrow()
-# 
-# segment_ids <-
-#   segments %>% 
-#   as_tibble() %>% 
-#   distinct(segment_id) %>% 
-#   arrange(segment_id) %>% 
-#   distinct(segment_id)
-# 
-# connectivity <- 
-#   expand_grid(base = segment_ids$segment_id, compare = segment_ids$segment_id) %>% 
-#   # mutate(row_id = 1:n()) %>% 
-#   # group_by(row_id) %>% 
-#   rowwise() %>% 
-#   group_split() %>%
-#   map(
-#     .x = .,
-#     .f = \(x) {
-#       x$upstream <- fwa_upstream(segments[segments$segment_id == x$base, ], segments[segments$segment_id == x$compare, ])
-#       x$downstream <- fwa_downstream(segments[segments$segment_id == x$base, ], segments[segments$segment_id == x$compare, ])
-#       x
-#     }
-#   ) %>% 
-#   list_rbind()
-# 
-# upstream_segments <- 
-#   connectivity %>% 
-#     group_by(base) %>% 
-#     filter(upstream) %>% 
-#     do(segments = as.vector(t(.$compare))) %>% 
-#     ungroup() %>% 
-#     rename(segment_id = base)
-# 
-# connectivity %<>% 
-#   left_join(upstream_segments, by = c("base" = "segment_id")) %>%
-#   rename(segments_base = segments) %>% 
-#   left_join(upstream_segments, by = c("compare" = "segment_id")) %>%
-#   rename(segments_compare = segments) %>% 
-#   rowwise() %>% 
-#   mutate(
-#     intersecting_segments = length(intersect(segments_base, segments_compare)),
-#     flow_connected = if_else(intersecting_segments != 0, TRUE, FALSE),
-#     flow_unconnected = if_else(intersecting_segments == 0, TRUE, FALSE)
-#   ) %>% 
-#   ungroup() %>% 
-#   select(base, compare, upstream, downstream, flow_connected, flow_unconnected)
-# 
-# chosen_seg_id <- segment_ids$segment_id[12]
-# segments %>% 
-#   left_join(
-#     connectivity %>% 
-#       filter(base == chosen_seg_id),
-#     by = c("segment_id" = "compare")
-#   ) %>% 
-#   ggplot() +
-#   geom_sf(aes(colour = flow_unconnected)) +
-#   geom_sf(data = segments %>% filter(segment_id == chosen_seg_id))
-# 
-#   
-# # This matrix is symmetric.
-# flow_unconnected <- matrix(NA, nrow = n_segments, ncol = n_segments)
-# rownames(flow_unconnected) <- segment_ids$segment_id
-# colnames(flow_unconnected) <- segment_ids$segment_id
-# 
-# for (i in 1:n_segments) {
-#   for (j in 1:n_segments) {
-#     flow_unconnected[i, j] <- connectivity$flow_unconnected[connectivity$base == segment_ids$segment_id[i] & connectivity$compare == segment_ids$segment_id[j]]
-#   }
-# }
-# 
-# 
-# ggplot() +
-#   # geom_sf(data = network_intersection_points) +
-#   geom_sf_label(data = network_intersection_points, aes(label = id)) +
-#   geom_sf(data = segments, aes(colour = segment_id))
-# 
-# segments
+nsegments <- nrow(segments)
+downstream_segments <- matrix(NA, nrow = nsegments, ncol = nsegments)
+colnames(downstream_segments) <- segments$segment_id
+rownames(downstream_segments) <- segments$segment_id
 
-
-# Maybe this could look like:
-  # ~ Segment, ~ Upstream Segment(s), ~ Downstream Segment(s), ~ Segment length (km)
-
-## Also need a measure of discharge/upstream watershed area for each segment for weighting matrix
-
-# Downstream distance matrix
-  # 0 along diagonal
-  # total distance if row is downstream of column
-  # 0 if column is upstream of row
-  # distance downstream to common confluence if 2 sites are flow unconnected.
-downstream_distance <- 
-  matrix(
-    c(0, 3, 0, 0,
-      7, 0, 0, 0,
-      12, 8, 0, 0,
-      18, 14, 6, 0),
-    byrow = TRUE, 
-    nrow = 4, 
-    ncol = 4
-  )
-
-# Total hydrologic distance (for TD model)
-total_distance <- downstream_distance + t(downstream_distance)
-
-# For weight matrix calculation
-flow_unconnected <- matrix(NA, nrow = dim(total_distance)[1], ncol = dim(total_distance)[2])
-
-for (i in 1:nrow(mat)) {
-  for (j in 1:ncol(mat)) {
-    flow_unconnected[i, j] <- !((mat[i, j] > 0) & (mat[j, i] > 0))
+for (i in 1:nsegments) {
+  for (j in 1:nsegments) {
+    downstream_segments[j, i] <- fwa_downstream(segments[i, ], segments[j, ])
   }
 }
 
-
-# Cumulative watershed area
-sites <- tibble(
-  site_id = c("S1", "S2", "S3", "S4"),
-  seg_id = c("R1", "R2", "R3", "R5")
-)
-
-segments <- tibble(
-  seg_id = c("R1", "R2", "R3", "R4", "R5"),
-  outlet = c(FALSE, FALSE, FALSE, FALSE, TRUE),
-  cumulative_watershed_area = c(50, 35, 115, 20, 160),
-  direct_upstream_segments = list(
-    c("R1", "R2"),
-    c("R1", "R2"),
-    c("R3", "R4"),
-    c("R3", "R4"),
-    NULL
-  ),
-  total_downstream_segments = list(
-    c("R1", "R3", "R5"),
-    c("R2", "R3", "R5"),
-    c("R3", "R5"),
-    c("R4", "R5"),
-    c("R5")
-  )
-) %>% 
+segment_pi <- 
+  segments %>% 
+  group_by(confluence_id) %>% 
+  mutate(confluence_area = sum(area)) %>% 
+  ungroup() %>% 
   mutate(
-    upstream_watershed_area = map(
-        .x = .$direct_upstream_segments,
-        .f = \(x) 
-          sum(.$cumulative_watershed_area[which(.$seg_id %in% x)])
+    segment_pi = drop_units(area / confluence_area)
+  )
+
+segment_afv <-
+  segment_pi %>% 
+  rowwise() %>% 
+  group_split() %>%
+  map(
+    .f = \(x) {
+      ds <- tibble(
+        segment_id = segment_pi$segment_id,
+        downstream = downstream_segments[, x$segment_id]
       ) %>% 
-      unlist(),
-    segment_pi = if_else(
-      outlet,
-      1,
-      cumulative_watershed_area / upstream_watershed_area
-    )
+        filter(downstream) %>% 
+        pull(segment_id)
+      
+      ds_pi <- 
+        segment_pi %>% 
+        filter(segment_id %in% ds) %>% 
+        pull(segment_pi)
+      
+      x$segment_afv <- x$segment_pi * prod(ds_pi)
+      x
+    }
   ) %>% 
-  mutate(
-    segment_afv = map(
-      .x = .$total_downstream_segments,
-      .f = \(x) 
-      prod(.$segment_pi[which(.$seg_id %in% x)])
-    ) %>% 
-    unlist()
-  )
+  do.call(rbind, .) %>% 
+  as_tibble() %>% 
+  select(segment_id, segment_afv)
 
-sites <- 
-  sites %>% 
-  left_join(select(segments, seg_id, segment_afv), join_by(seg_id)) %>% 
-  rename(site_afv = segment_afv)
-## This will need sorting by from "upstream" to "downstream" for matrix calculation below
-# Order of sites at flow-unconnected locations doesn't matter (see how this expands though)
-
-nsites <- nrow(sites)
-
-weight_matrix <- matrix(NA, nsites, nsites)
+points %<>% 
+  left_join(segment_afv, join_by(segment_id))
+  
+weight_matrix <- matrix(NA, nrow = nsites, ncol = nsites)
+rownames(weight_matrix) <- points$site
+colnames(weight_matrix) <- points$site
 
 for (i in 1:nsites) {
   for (j in 1:nsites) {
-    if (i <= j) 
-      weight_matrix[i, j] <- sqrt(sites$site_afv[i] / sites$site_afv[j])
-      weight_matrix[j, i] <- weight_matrix[i, j]
+    i_upstream <- fwa_upstream(points[j, ], points[i, ])
+    j_upstream <- fwa_upstream(points[i, ], points[j, ])
+    if (i_upstream & j_upstream) {
+      weight_matrix[i, j] <- 1
+    } else if (i_upstream & !j_upstream) {
+      weight_matrix[i, j] <- sqrt(points$segment_afv[i] / points$segment_afv[j])
+    } else if (j_upstream & !i_upstream) {
+      weight_matrix[i, j] <- sqrt(points$segment_afv[j] / points$segment_afv[i])
+    } else {
+      weight_matrix[i, j] <- 0
+    }
   }
 }
 
-weight_matrix <- weight_matrix * flow_unconnected # Element-wise multiplication
+chk_true(all(diag(weight_matrix) == 1))
+chk_true(isSymmetric(weight_matrix))
+chk_true(all((weight_matrix == 0) == (flow_connected == 0)))
+
