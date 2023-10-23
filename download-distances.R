@@ -230,7 +230,7 @@ network_intersection_points <-
   ungroup()
 
 # Get stream outlet 
-outlet <- 
+outlet_point <- 
   network_unioned %>% 
   slice_min(localcode_ltree) %>% 
   slice_min(downstream_route_measure) %>% 
@@ -708,3 +708,17 @@ chk_true(all(diag(weight_matrix) == 1))
 chk_true(isSymmetric(weight_matrix))
 chk_true(all((weight_matrix == 0) == (flow_connected == 0)))
 
+
+sbf_set_sub("distance")
+# Save distance matrices
+sbf_save_object(downstream_hydrologic_distance, "downstream_hydrologic_distance")
+sbf_save_object(total_hydrologic_distance, "total_hydrologic_distance")
+# Save weight matrix
+sbf_save_object(weight_matrix, "weight_matrix")
+
+### Compare distance matrix to that from openstars
+dist <- readRDS("~/Analyses/fish-passage-22/nc.ssn/distance/obs/dist.net157.RData")
+sbf_save_object(dist, "openstars_distance")
+
+downstream_hydrologic_distance %>% view()
+dist %>% view()
