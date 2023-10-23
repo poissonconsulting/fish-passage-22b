@@ -15,12 +15,14 @@ source("clean-data.R")
 source("tidy-data.R")
 
 source("plot-water-temp.R")
+source("plot-air-temp.R")
 
 source("create-database.R")
 source("populate-database.R")
+source("query-database.R")
 
 source("manipulate-temperature.R")
-source("dag-temperature.R")
+# source("dag-temperature.R")
 source("analyse-temperature.R")
 source("predict-temperature.R")
 source("residuals-temperature.R")
