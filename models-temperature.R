@@ -15,22 +15,16 @@ description %<>% arrange(Parameter)
 
 sbf_save_table(description, caption = "Parameter descriptions.")
 
-model <- model("model{
-  bY ~ dnorm(0, 2^-2)
-  bX ~ dnorm(0, 2^-2)
-  sY ~ dnorm(0, 2^-2) T(0,)
-
-  for (i in 1:nObs) {
-    eY[i] <- bY + bX * X[i]
-    Y[i] ~ dnorm(eY[i], sY^-2)
-  }
-}",
-new_expr = "
-for(i in 1:nObs) {
-    prediction[i] <- bY + bX * X[i]
-    fit[i] <- prediction[i]
-    residual[i] <- res_norm(Y[i], fit[i], sY)
-}"
+model <- model(
+  read_file("temperature.stan"),
+  new_expr = "
+    for(i in 1:nObs) {
+      
+    }",
+  new_expr_vec = TRUE,
+  select_data = list(
+    
+  )
 )
 
 sbf_save_block(template(model), "template", caption = "Model description.")

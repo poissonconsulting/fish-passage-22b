@@ -1,0 +1,12 @@
+data {
+  
+}
+
+parameters {
+  
+}
+
+model {
+  
+}
+

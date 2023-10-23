@@ -1,7 +1,7 @@
 source("header.R")
 
-data <- tibble(X = 1:10, Y = rnorm(10, 1:10),
-               type = c("a", "a", "b", "b", "c", "c", "d", "d", "e", "e"))
+sbf_load_datas("query")
+
 
 gp <- ggplot(data = data) +
   aes(x = X, y = Y, colour = type) +
