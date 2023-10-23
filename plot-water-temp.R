@@ -1,7 +1,7 @@
 source("header.R")
 
 sbf_set_sub("tidy")
-sbf_load_datas()
+water_temp <- sbf_load_data("water_temp")
 
 gp <- ggplot(data = water_temp, aes(x = date_time, y = temp)) +
   geom_point(aes(colour = flag), alpha = 0.1, size = 0.0001) + 
