@@ -3,9 +3,11 @@ source("header.R")
 sbf_set_sub("read")
 
 # Water temp ----
-# Data downloaded programatically f
+# Data downloaded programatically below
 # Backup data downloaded from https://zenodo.org/record/6426024#.ZEAqr-zMI0Q on 04-19-2023
-dir <- "~/Poisson/Data/fish-passage/2022/Data/Nechako water temp"
+# dir <- file.path("~/Poisson/Data/fish-passage/2022/Data/Nechako water temp/Data")
+# dir <- file.path("~/Poisson/Clients - Transfer/New Graph/xxxxxxxx")
+# file_names <- list.files(dir, ".csv", full.names = TRUE)
 
 # Water temp ----
 temp <- tempfile()
@@ -23,7 +25,13 @@ water_temp <- list_rbind(water_temp)
 unlink(temp)
 rm(temp)
 
-# metadata
+# Water temp meta data
+# Downloaded programatically below
+# Backup data downloaded from https://zenodo.org/record/6426024#.ZEAqr-zMI0Q on 04-19-2023
+# dir <- file.path("~/Poisson/Data/fish-passage/2022/Data/Nechako water temp/NHG Data ReadMe.txt")
+# dir <- file.path("~/Poisson/Clients - Transfer/New Graph/xxxxxxxx")
+# water_temp_meta_data <- read_tsv(dir, skip = 3)
+
 download.file(
   "https://zenodo.org/record/6426024/files/NHG%20Data%20ReadMe.txt?download=1",
   "output/data/read/water_temp_meta_data.txt"
@@ -40,11 +48,6 @@ water_temp_meta_data <- read_tsv("output/data/read/water_temp_meta_data.txt", sk
 dir <- file.path("~/Poisson/Data/fish-passage/2022/Data/Air temp/data.nc")
 # dir <- file.path("~/Poisson/Clients - Transfer/New Graph/xxxxxxxx")
 
-# ncin <- nc_open(dir)
-# origin <- ncin$dim$time$units # UTC
-# nc_close(ncin)
-# 
-# rm(ncin)
 
 air_temp <- tidync(dir) %>%  # Can filter this before making it a tibble using 
   # `hyper_filter()` https://rdrr.io/cran/tidync/f/vignettes/netcdf-with-tidync.Rmd
