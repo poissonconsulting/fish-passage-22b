@@ -709,16 +709,25 @@ chk_true(isSymmetric(weight_matrix))
 chk_true(all((weight_matrix == 0) == (flow_connected == 0)))
 
 
+# Calculate euclidean distances
+euclidean_distance <- 
+  points %>% 
+  st_distance() %>% 
+  drop_units()
+
+
 sbf_set_sub("distance")
 # Save distance matrices
 sbf_save_object(downstream_hydrologic_distance, "downstream_hydrologic_distance")
 sbf_save_object(total_hydrologic_distance, "total_hydrologic_distance")
+sbf_save_object(euclidean_distance, "euclidean_distance")
 # Save weight matrix
 sbf_save_object(weight_matrix, "weight_matrix")
+sbf_save_object(flow_connected, "flow_connected")
 
-### Compare distance matrix to that from openstars
-dist <- readRDS("~/Analyses/fish-passage-22/nc.ssn/distance/obs/dist.net157.RData")
-sbf_save_object(dist, "openstars_distance")
-
-downstream_hydrologic_distance %>% view()
-dist %>% view()
+### Compare distance matrix to that from openSTARS
+# dist <- readRDS("~/Analyses/fish-passage-22/nc.ssn/distance/obs/dist.net157.RData")
+# sbf_save_object(dist, "openstars_distance")
+# 
+# downstream_hydrologic_distance %>% view()
+# dist %>% view()
