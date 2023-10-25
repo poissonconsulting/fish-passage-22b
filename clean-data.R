@@ -4,8 +4,6 @@ sbf_set_sub("read")
 sbf_load_datas()
 sbf_load_objects()
 
-sbf_set_sub("clean")
-
 # Water temp ----
 water_temp %<>%
   mutate(
@@ -102,9 +100,12 @@ sites <-
   ps_sfcs_to_crs(crs = crs) %>% 
   select(site, geometry)
 
-st_write(sites, "output/objects/ssn/site.shp", append = FALSE)
+# st_write(sites, "output/objects/ssn/site.shp", append = FALSE)
 
-water_temp_visit <- 
+water_temp_site %<>%
+  ps_longlat_to_sfc()
+
+water_temp_visit <-
   water_temp_meta_data %>%
   filter(site_visit_row) %>%
   select(site, meta) %>%
@@ -118,6 +119,11 @@ water_temp_visit <-
       .default = NA_Date_
     ),
     date_logger_returned = date_visit,
+    date_logger_returned = if_else2(
+      site == "CNE" & date_logger_removed == "2020-08-25",
+      ymd("2020-08-26"),
+      date_logger_returned
+    ),
     time_logger_removed = case_when(
       str_detect(meta, "ogger removed at") ~ 
         dtt_time(str_c(str_extract(meta, "(?<=ogger removed at )\\d{2}:\\d{2}"), ":00")),
@@ -145,8 +151,18 @@ water_temp_visit <-
     ),
     across(starts_with("date_time"), \(x) dtt_adjust_tz(x, tz = tz_analysis)),
     date_visit = dtt_date(date_time_logger_removed)
-  ) %>%
-  select(site, date_visit, date_time_logger_removed, date_time_logger_returned)
+  ) %>% 
+  select(site, date_visit, date_time_logger_removed, date_time_logger_returned) %>% 
+  pivot_longer(
+    cols = starts_with("date_time"),
+    names_to = "action",
+    values_to = "date_time"
+  ) %>% 
+  group_by(site, date_visit) %>% 
+  complete(date_time = seq(min(date_time), max(date_time), by = "min")) %>% 
+  ungroup() %>% 
+  mutate(data_downloading = TRUE) %>% 
+  select(site, date_time, data_downloading)
 
 water_temp_notes <- 
   water_temp_meta_data %>%
@@ -253,9 +269,40 @@ water_temp %<>%
   ) %>%
   left_join(water_temp_problem_periods, join_by(site, date_time)) %>% 
   mutate(problem = replace_na(problem, FALSE)) %>% 
-  select(site, site_description, date_time, temp, flag, problem, comment)
+  left_join(water_temp_visit, join_by(site, date_time)) %>% 
+  mutate(data_downloading = replace_na(data_downloading, FALSE)) %>%
+  # Also flag data as "fail" if there was a problem with the logger
+  # or during times the data was being downloaded
+  mutate(
+    new_flag = case_when(
+      flag == "F" ~ "F",
+      flag == "B" ~ "B",
+      flag == "P" ~ "P",
+      problem ~ "I",
+      data_downloading ~ "D",
+      .default = NA_character_
+    ),
+    date = dtt_date(date_time),
+    time = dtt_time(date_time)
+  ) %>% 
+  select(site, date, time, temp, flag = new_flag, comment) %>% 
+  drop_na(temp) %>% 
+  # Filter out duplicate site/date_time observations
+  group_by(site, date, time) %>%
+  filter(row_number() == 1) %>%
+  ungroup()
 
-rm(water_temp_notes)
+water_temp_flag <- tribble(
+  ~flag,     ~flag_description,
+  "P",                  "Pass",
+  "F",                  "Fail",
+  "B",  "Backwater conditions",
+  "D",      "Data downloading",
+  "I",     "Issue with logger"
+)
+
+rm(water_temp_notes, water_temp_meta_data, water_temp_problem_periods,
+   water_temp_visit)
 
 # Air temp ----
 origin <- str_extract(origin, "(?<=hours since ).*")
@@ -284,7 +331,8 @@ air_temp_geom <-
   distinct(geometry) %>% 
   select(geometry)
 
-site_to_temp <- ps_nearest_feature(sites, air_temp_geom, dist_col = "dist") %>% 
+site_to_temp <- 
+  ps_nearest_feature(sites, air_temp_geom, dist_col = "dist") %>% 
   rename(
     geom_site = geometry,
     geom_temp = geometry.y,
@@ -322,8 +370,9 @@ gp <- ggplot(air_temp, aes(x = date, y = mean_temp)) +
 sbf_open_window()
 sbf_print(gp)
 
-rm(air_temp_geom, site_to_temp)
+rm(air_temp_geom, site_to_temp, sites, sites_long_lat)
 
+sbf_set_sub("clean")
 sbf_save_datas()
 
 if(FALSE) {
