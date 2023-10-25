@@ -18,8 +18,9 @@ source("plot-water-temp.R")
 source("plot-air-temp.R")
 
 source("create-database.R")
-source("populate-database.R")
 source("query-database.R")
+
+source("download-distances.R")
 
 source("manipulate-temperature.R")
 # source("dag-temperature.R")
