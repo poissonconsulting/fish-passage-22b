@@ -1,22 +1,53 @@
-# running this script replaces it with the schema to recreate the database
-
 source("header.R")
 
-sbf_set_db_name("fish-passage-21")
+sbf_set_db_name("fish-passage-22")
 
-sql <- sbf_query_db("SELECT sql FROM sqlite_master")
-sql <- sql[[1]]
-sql <- sql[!is.na(sql)]
-sql <- sql[!grepl("CREATE TABLE readwritesqlite_", sql)]
-sql <- vapply(sql, function(x) paste0("sbf_execute_db(\"", x, "\")\n"),
-              character(1))
+sbf_create_db()
 
-sql <- c("source(\"header.R\")\n",
-         "sbf_set_db_name(\"ldr-rb-spawning\")\n",
-         "sbf_create_db()\n",
-         "# populate individual tables using sbf_save_data_to_db(name_of_table)",
-         "# or populate all tables using sbf_save_datas_to_db()\n",
-         sql,
-         "\n sbf_save_db_to_workbook()\n")
+sbf_load_datas(sub = "tidy")
 
-writeLines(sql, "create-database.R")
+sbf_execute_db("CREATE TABLE water_temp_site (
+               site TEXT NOT NULL,
+               site_description TEXT NOT NULL,
+               elev REAL NOT NULL,
+               start_date TEXT,
+               end_date TEXT,
+               geometry BLOB NOT NULL,
+               CHECK(
+               LENGTH(site) = 3 AND
+               elev > 0 AND
+               elev < 4000 AND
+               start_date < end_date
+               ),
+               PRIMARY KEY (site))")
+
+sbf_save_data_to_db(water_temp_site)
+
+sbf_execute_db("CREATE TABLE water_temp_flag (
+               flag TEXT NOT NULL,
+               flag_description TEXT NOT NULL,
+               CHECK(
+               LENGTH(flag) = 1
+               ),
+               PRIMARY KEY (flag))")
+
+sbf_save_data_to_db(water_temp_flag)
+
+sbf_execute_db("CREATE TABLE water_temp (
+               site TEXT NOT NULL,
+               date TEXT NOT NULL,
+               time TEXT NOT NULL,
+               temp REAL NOT NULL,
+               flag TEXT NOT NULL,
+               comment TEXT,
+               CHECK(
+               LENGTH(site) = 3 AND
+               LENGTH(flag) = 1 AND
+               temp > -10 AND
+               temp < 50
+               ),
+               PRIMARY KEY (site, date, time),
+               FOREIGN KEY (site) REFERENCES water_temp_site(site),
+               FOREIGN KEY (flag) REFERENCES water_temp_flag(flag))")
+
+sbf_save_data_to_db(water_temp)
