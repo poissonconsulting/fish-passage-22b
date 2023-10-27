@@ -23,35 +23,30 @@ model <- model(
     data$N_y_obs <- length(data$i_y_obs)
     data$N_y_mis <- length(data$i_y_mis)
     data$y_obs <- data$mean_temp[!is.na(data$mean_temp)]
-    data$I <- diag(0, nrow = data$nsite, ncol = data$nsite)
+    data$I <- diag(1, nrow = data$nsite, ncol = data$nsite)
     data$D <- D
     data$W <- W
     data$H <- H
     data$flow_con_mat <- flow_con_mat
     data$E <- E
-    data$alpha_max <- 4 * max(data$H) 
-    # data$npredictors <- 3L
-    # data$X <- array(NA, dim = c(data$ndate, data$nsite, data$npredictors))
-    # for (t in 1:data$ndate) {
-    #   # Intercept
-    #   data$X[t, , 1] <- rep(1.0, data$nsite)
-    #   # bDoy
-    #   data$X[t, , 2] <- data$doy[((t - 1) * data$nsite + 1):(t * data$nsite)]
-    #   # bDoy2
-    #   data$X[t, , 3] <- data$X[t, , 2]^2
-    # }
     data
   },
   new_expr = "
-    for(i in 1:nObs) {
-      
+    for (i in 1:nObs) {
+      prediction[i] <- exp(bIntercept + bDoy * doy[i] + bDoy2 * doy[i]^2)
+      # Predict over range of H values (total hydrologic distance)
+      eTU[i] <- sigma_tu^2 * exp(-3 * H[i] / alpha_tu)
+      eTD[i] <- sigma_td^2 * exp(-3 * H[i] / alpha_td) # Flow-unconnected just sums distance to common confluence
+      eED[i] <- sigma_ed^2 * exp(-3 * E[i] / alpha_ed)
     }",
   new_expr_vec = TRUE,
   select_data = list(
     mean_temp = c(0, 30, NA),
     site = factor(),
-    date = factor(),
-    `doy*` = c(1L, 366L)
+    week = factor(),
+    `doy*` = c(1L, 366L),
+    H = c(0, 50 * 5000),
+    E = c(0, 50 * 500)
   )
 )
 
