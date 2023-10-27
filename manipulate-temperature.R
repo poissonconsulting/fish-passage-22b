@@ -12,39 +12,97 @@ dist_sites <- rownames(D)
 
 sbf_load_datas("query")
 
+# # Daily mean water temp ----
+# water_temp <-
+#   water_temp %>% 
+#   filter(flag == "P") %>% 
+#   select(site, date, time, temp) %>% 
+#   group_by(site, date) %>% 
+#   summarize(mean_temp = mean(temp), .groups = "drop")
+# 
+# data <- water_temp %>% 
+#   expand(site, date = full_seq(date, 1)) %>% 
+#   left_join(water_temp, join_by(site, date)) %>% 
+#   mutate(
+#     site_remains = if_else2(site %in% dist_sites, TRUE, FALSE)
+#   ) %>% 
+#   filter(site_remains) %>% 
+#   select(site, date, mean_temp)
+# 
+# ### Filter to dates with at least 3 sites with data
+# keep_dates <- 
+#   data %>% 
+#   filter(!is.na(mean_temp)) %>% 
+#   count(date) %>% 
+#   filter(n >= 3) %>% 
+#   pull(date)
+# 
+# data %<>% 
+#   filter(date %in% keep_dates) %>% 
+#   mutate(
+#     doy = dtt_doy(date),
+#     date = factor(date),
+#     site = factor(site)
+#   ) %>% 
+#   ### Must be arranged in this order for the model
+#   arrange(date, site)
+# 
+# chk_equal(levels(data$site), dist_sites)
+
+# Weekly mean water temp ----
 water_temp <-
   water_temp %>% 
   filter(flag == "P") %>% 
   select(site, date, time, temp) %>% 
-  group_by(site, date) %>% 
+  mutate(
+    day = as.integer(dtt_date(date)),
+    day = day - min(day),
+    week = as.integer(day %/% 7 + 1)
+  ) %>% 
+  group_by(week) %>% 
+  mutate(doy = min(dtt_doy(date))) %>% 
+  group_by(site, week, doy) %>% 
   summarize(mean_temp = mean(temp), .groups = "drop")
 
-data <- water_temp %>% 
-  expand(site, date = full_seq(date, 1)) %>% 
-  left_join(water_temp, join_by(site, date)) %>% 
+week_doy <- 
+  water_temp %>% 
+  select(week, doy) %>% 
+  distinct() %>% 
+  arrange(week)
+
+data <- 
+  water_temp %>% 
+  expand(site, week = full_seq(week, 1)) %>% 
+  left_join(water_temp, join_by(site, week)) %>% 
+  left_join(week_doy, join_by(week)) %>% 
   mutate(
+    doy = if_else(is.na(doy.x), doy.y, doy.x),
     site_remains = if_else2(site %in% dist_sites, TRUE, FALSE)
   ) %>% 
   filter(site_remains) %>% 
-  select(site, date, mean_temp)
+  select(site, week, doy, mean_temp)
 
 ### Filter to dates with at least 3 sites with data
-keep_dates <- 
+keep_weeks <- 
   data %>% 
   filter(!is.na(mean_temp)) %>% 
-  count(date) %>% 
+  dplyr::count(week) %>% 
   filter(n >= 3) %>% 
-  pull(date)
+  pull(week)
+
+# check no gaps
+chk_equal(keep_weeks, min(keep_weeks):max(keep_weeks))
 
 data %<>% 
-  filter(date %in% keep_dates) %>% 
+  filter(week %in% keep_weeks) %>% 
   mutate(
-    doy = dtt_doy(date),
-    date = factor(date),
-    site = factor(site)
-  ) %>% 
+    week = factor(week),
+    site = factor(site),
+    H = seq(min(H), max(H) * 50, length.out = n()),
+    E = seq(min(E), max(E) * 50, length.out = n())
+  ) %>%
   ### Must be arranged in this order for the model
-  arrange(date, site)
+  arrange(week, site)
 
 chk_equal(levels(data$site), dist_sites)
 
