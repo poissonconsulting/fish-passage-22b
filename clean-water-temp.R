@@ -1,10 +1,8 @@
 source("header.R")
 
-sbf_set_sub("read")
+sbf_set_sub("read", "water-temp")
 sbf_load_datas()
-sbf_load_objects()
 
-# Water temp ----
 water_temp %<>%
   mutate(
     site = basename(file),
@@ -100,6 +98,7 @@ sites <-
   ps_sfcs_to_crs(crs = crs) %>% 
   select(site, geometry)
 
+# Write shapefile to calculate SSN object
 # st_write(sites, "output/objects/ssn/site.shp", append = FALSE)
 
 water_temp_site %<>%
@@ -194,8 +193,6 @@ water_temp_notes <-
   ) %>%
   select(site, date_time_start_problem, date_time_end_problem, comment)
 
-rm(water_temp_meta)
-
 ### ^ Manually checked the problematic sites to see if flag == 'F' during the specified period: none had the flag all the way through the suspected problematic periods.
 
 water_temp_problem_periods <- 
@@ -231,66 +228,35 @@ water_temp_problem_periods <-
             by = "5 mins"
           )
         ) %>% 
-        fill(site, comment, .direction = "up") %>% 
-        drop_na(date_time)
+          fill(site, comment, .direction = "up") %>% 
+          drop_na(date_time)
       } else if (is.na(x$date_time[x$boundary == "start"]) & 
-          !is.na(x$date_time[x$boundary == "end"])) {
+                 !is.na(x$date_time[x$boundary == "end"])) {
         x %>% 
           complete(
             date_time = seq(
-            dtt_date_time(
-              water_temp_site$start_date[water_temp_site$site == x$site[1]],  
-              dtt_time("00:00:00"),
-              tz = tz_analysis
-            ),
-            max(date_time, na.rm = TRUE),
-            by = "5 mins"
-          )
-        ) %>% 
-        fill(site, comment, .direction = "up") %>% 
-        drop_na(date_time)
+              dtt_date_time(
+                water_temp_site$start_date[water_temp_site$site == x$site[1]],  
+                dtt_time("00:00:00"),
+                tz = tz_analysis
+              ),
+              max(date_time, na.rm = TRUE),
+              by = "5 mins"
+            )
+          ) %>% 
+          fill(site, comment, .direction = "up") %>% 
+          drop_na(date_time)
       } else if (!is.na(x$date_time[x$boundary == "start"]) & 
-          !is.na(x$date_time[x$boundary == "end"])) {
+                 !is.na(x$date_time[x$boundary == "end"])) {
         x %>% 
-        complete(date_time = seq(min(date_time), max(date_time), by = "5 mins")) %>%
-        fill(site, comment)
+          complete(date_time = seq(min(date_time), max(date_time), by = "5 mins")) %>%
+          fill(site, comment)
       }
     }
   ) %>% 
   bind_rows() %>% 
   mutate(problem = TRUE) %>% 
   select(site, date_time, problem, comment)
-
-water_temp %<>%
-  rename(site_description = site) %>%
-  left_join(
-    select(water_temp_site, site, site_description), 
-    join_by(site_description)
-  ) %>%
-  left_join(water_temp_problem_periods, join_by(site, date_time)) %>% 
-  mutate(problem = replace_na(problem, FALSE)) %>% 
-  left_join(water_temp_visit, join_by(site, date_time)) %>% 
-  mutate(data_downloading = replace_na(data_downloading, FALSE)) %>%
-  # Also flag data as "fail" if there was a problem with the logger
-  # or during times the data was being downloaded
-  mutate(
-    new_flag = case_when(
-      flag == "F" ~ "F",
-      flag == "B" ~ "B",
-      flag == "P" ~ "P",
-      problem ~ "I",
-      data_downloading ~ "D",
-      .default = NA_character_
-    ),
-    date = dtt_date(date_time),
-    time = dtt_time(date_time)
-  ) %>% 
-  select(site, date, time, temp, flag = new_flag, comment) %>% 
-  drop_na(temp) %>% 
-  # Filter out duplicate site/date_time observations
-  group_by(site, date, time) %>%
-  filter(row_number() == 1) %>%
-  ungroup()
 
 water_temp_flag <- tribble(
   ~flag,     ~flag_description,
@@ -301,110 +267,7 @@ water_temp_flag <- tribble(
   "I",     "Issue with logger"
 )
 
-rm(water_temp_notes, water_temp_meta_data, water_temp_problem_periods,
-   water_temp_visit)
-
-# Air temp ----
-origin <- str_extract(origin, "(?<=hours since ).*")
-
-air_temp <- 
-  air_temp %>% 
-  mutate(
-    temp = t2m - 273.15,
-    date_time = as_datetime(time * 60 * 60, origin = origin),
-    date_time = dtt_adjust_tz(date_time, tz = tz_analysis),
-    date = dtt_date(date_time),
-  ) %>% 
-  group_by(date, longitude, latitude) %>% 
-  summarize(mean_temp = mean(temp), .groups = "keep") %>% 
-  select(date, longitude, latitude, mean_temp) %>% 
-  rename(
-    Longitude = longitude,
-    Latitude = latitude
-  ) %>% 
-  ps_longlat_to_sfc() %>% 
-  ps_sfcs_to_crs(crs = crs)
-
-### Get long/lat closest to water temp sites
-air_temp_geom <- 
-  air_temp %>% 
-  distinct(geometry) %>% 
-  select(geometry)
-
-site_to_temp <- 
-  ps_nearest_feature(sites, air_temp_geom, dist_col = "dist") %>% 
-  rename(
-    geom_site = geometry,
-    geom_temp = geometry.y,
-  )
-
-air_temp <- 
-  air_temp %>% 
-  filter(geometry %in% site_to_temp$geom_temp) %>% 
-  ps_sfc_to_coords() %>% 
-  as_tibble()
-
-site_to_temp <- 
-  site_to_temp %>% 
-  select(-geom_site) %>% 
-  ps_activate_sfc(sfc_name = "geom_temp") %>% 
-  ps_sfc_to_coords() %>% 
-  as_tibble() %>% 
-  select(site, dist, X, Y)
-
-air_temp <- 
-  air_temp %>% 
-  left_join(
-    site_to_temp, 
-    by = c("X", "Y"), 
-    relationship = "many-to-many"
-  ) %>% 
-  rename(x = X, y = Y, dist_from_site = dist)
-
-gp <- ggplot(air_temp, aes(x = date, y = mean_temp)) +
-  geom_point(size = 0.1) +
-  geom_line(linewidth = 0.1) +
-  scale_x_date() +
-  facet_wrap(~site)
-
-sbf_open_window()
-sbf_print(gp)
-
-rm(air_temp_geom, site_to_temp, sites, sites_long_lat)
-  
-# Discharge ----
-discharge_meta %<>% 
-  filter(`Station Number` %in% unique(discharge$ID)) %>% 
-  select(id = `Station Number`, Latitude, Longitude)
-
-discharge %<>% 
-  rename_with(snakecase::to_snake_case) %>% 
-  left_join(discharge_meta, join_by(id)) %>%
-  mutate(
-    param = if_else(param == 1, "discharge", "level")
-  ) %>% 
-  rename(flag = sym) %>% 
-  pivot_wider(
-    names_from = c("param"),
-    values_from = c("value", "flag")
-  ) %>% 
-  rename(
-    discharge = value_discharge,
-    level = value_level
-  ) %>% 
-  filter(date >= min(water_temp$date) & date <= max(water_temp$date)) %>% 
-  ps_longlat_to_sfc() %>% 
-  st_join(
-    water_temp_site %>% select(site, geometry),
-    join = st_is_within_distance, 
-    dist = 1000
-  ) %>% 
-  as_tibble() %>% 
-  select(
-    station_id = id, site, date, discharge, level, flag_discharge, flag_level
-  )
-
-sbf_set_sub("clean")
+sbf_set_sub("clean", "water-temp")
 sbf_save_datas()
 
 if(FALSE) {
