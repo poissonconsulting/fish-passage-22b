@@ -1,6 +1,6 @@
 source("header.R")
 
-sbf_set_sub("tidy")
+sbf_set_sub("tidy", "water-temp")
 sites_long_lat <- sbf_load_data("sites_long_lat")
 
 points <- 
@@ -14,7 +14,6 @@ points <-
   do.call(rbind, .) %>% 
   filter(!site == "SLS") # SLS site located on a spillway, not in stream network.
 
-# Get this programatically
 stream_network_names <- as.list(c(
   "NECR",
   "CHES",
