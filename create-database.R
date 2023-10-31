@@ -53,36 +53,36 @@ sbf_execute_db("CREATE TABLE water_temp (
 
 sbf_save_data_to_db(water_temp)
 
-sbf_execute_db("CREATE TABLE discharge_flag (
-               flag TEXT NOT NULL,
-               flag_description TEXT NOT NULL,
+sbf_execute_db("CREATE TABLE discharge_site (
+               station_id TEXT NOT NULL,
+               river TEXT NOT NULL,
+               station TEXT NOT NULL,
+               latitude REAL NOT NULL,
+               longitude REAL NOT NULL,
+               altitude REAL,
                CHECK(
-               LENGTH(flag) = 1
+               LENGTH(station_id) = 7 AND
+               latitude > 53 AND
+               latitude < 55 AND
+               longitude < -122 AND
+               longitude > -128 AND 
+               altitude > 0 AND
+               altitude < 2500
                ),
-               PRIMARY KEY (flag))")
+               PRIMARY KEY (station_id))")
 
-sbf_save_data_to_db(discharge_flag)
+sbf_save_data_to_db(discharge_site)
 
 sbf_execute_db("CREATE TABLE discharge (
-               site TEXT NOT NULL,
                station_id TEXT NOT NULL,
                date TEXT NOT NULL,
-               discharge REAL,
-               level REAL,
-               flag_level TEXT,
-               flag_discharge TEXT,
+               mean_discharge REAL NOT NULL,
                CHECK(
-               LENGTH(site) = 3 AND
-               LENGTH(flag_level) = 1 AND
-               LENGTH(flag_discharge) = 1 AND
-               discharge > 0 AND
-               discharge < 100 AND
-               level > 0 AND
-               level < 500
+               DATE(date) IS date AND
+               mean_discharge > 0 AND
+               mean_discharge < 1000
                ),
                PRIMARY KEY (station_id, date),
-               FOREIGN KEY (site) REFERENCES water_temp_site(site),
-               FOREIGN KEY (flag_level) REFERENCES discharge_flag(flag),
-               FOREIGN KEY (flag_discharge) REFERENCES discharge_flag(flag))")
+               FOREIGN KEY (station_id) REFERENCES discharge_site(station_id))")
 
 sbf_save_data_to_db(discharge)
