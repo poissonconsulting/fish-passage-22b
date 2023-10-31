@@ -22,12 +22,12 @@ source("read-discharge.R")
 source("clean-discharge.R")
 source("tidy-discharge.R")
 
-source("plot-water-temp.R")
-source("plot-air-temp.R")
-source("plot-discharge.R")
-
 source("create-database.R")
 source("query-database.R")
+
+source("plot-water-temp.R")
+# source("plot-air-temp.R")
+source("plot-discharge.R")
 
 source("download-distances.R")
 source("calculate-shortwave-radiation.R")
