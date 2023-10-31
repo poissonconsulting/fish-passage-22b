@@ -715,6 +715,8 @@ euclidean_distance <-
   st_distance() %>% 
   drop_units()
 
+rownames(euclidean_distance) <- points$site
+colnames(euclidean_distance) <- points$site
 
 sbf_set_sub("distance")
 # Save distance matrices
