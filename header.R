@@ -16,7 +16,7 @@ if (getDoParWorkers() == 1) {
   registerDoParallel(4)
 }
 
-set_analysis_mode("quick")
+set_analysis_mode("report")
 
 rm(list = ls())
 graphics.off()
@@ -27,6 +27,8 @@ library(tidync)
 
 dir <- "~/Poisson/Data/fish-passage/2022"
 crs <- 3005 # BC Albers
+
+bounding_dates <- dtt_date(c("2019-07-13", "2021-10-29"))
 
 tz_data <- "UTC"
 tz_analysis <- "Etc/GMT+8"
