@@ -371,6 +371,38 @@ sbf_open_window()
 sbf_print(gp)
 
 rm(air_temp_geom, site_to_temp, sites, sites_long_lat)
+  
+# Discharge ----
+discharge_meta %<>% 
+  filter(`Station Number` %in% unique(discharge$ID)) %>% 
+  select(id = `Station Number`, Latitude, Longitude)
+
+discharge %<>% 
+  rename_with(snakecase::to_snake_case) %>% 
+  left_join(discharge_meta, join_by(id)) %>%
+  mutate(
+    param = if_else(param == 1, "discharge", "level")
+  ) %>% 
+  rename(flag = sym) %>% 
+  pivot_wider(
+    names_from = c("param"),
+    values_from = c("value", "flag")
+  ) %>% 
+  rename(
+    discharge = value_discharge,
+    level = value_level
+  ) %>% 
+  filter(date >= min(water_temp$date) & date <= max(water_temp$date)) %>% 
+  ps_longlat_to_sfc() %>% 
+  st_join(
+    water_temp_site %>% select(site, geometry),
+    join = st_is_within_distance, 
+    dist = 1000
+  ) %>% 
+  as_tibble() %>% 
+  select(
+    station_id = id, site, date, discharge, level, flag_discharge, flag_level
+  )
 
 sbf_set_sub("clean")
 sbf_save_datas()
