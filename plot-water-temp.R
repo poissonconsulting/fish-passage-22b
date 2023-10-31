@@ -1,7 +1,7 @@
 source("header.R")
 
-sbf_set_sub("tidy", "water-temp")
-water_temp <- sbf_load_data("water_temp")
+sbf_set_sub("query")
+sbf_load_datas()
 
 water_temp$date_time <- dtt_date_time(
   water_temp$date, 
