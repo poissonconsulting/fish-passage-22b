@@ -64,9 +64,7 @@ transformed parameters {
   
   // Main model
   for (i in 1:(nweek * nsite)) {
-    eRunoff[i] = bInterceptRunoff + bPrecip * precipitation[i] + bAirTemp * air_temp[i] + bUpstreamWatershedArea * uwa[i]
-    eDischarge[i] = bInterceptDischarge + bRunoff * eRunoff[i]
-    eTempVec[i] = bInterceptTemp + bShortwave * shortwave[i] + bDischarge * mean_discharge[i];
+    eTempVec[i] = bIntercept + bShortwave * shortwave[i] + bDischarge * mean_discharge[i];
   }
   
   // Define 1st mu and epsilon
