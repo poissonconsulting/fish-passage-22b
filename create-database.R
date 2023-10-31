@@ -4,7 +4,8 @@ sbf_set_db_name("fish-passage-22")
 
 sbf_create_db()
 
-sbf_load_datas(sub = "tidy")
+sbf_load_datas(sub = "tidy/water-temp")
+sbf_load_datas(sub = "tidy/discharge")
 
 sbf_execute_db("CREATE TABLE water_temp_site (
                site TEXT NOT NULL,
