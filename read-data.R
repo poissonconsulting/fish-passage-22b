@@ -55,6 +55,32 @@ air_temp <- tidync(dir) %>%  # Can filter this before making it a tibble using
 
 rm(dir)
 
+# Discharge
+paths <- list.files(
+  "~/Poisson/Data/fish-passage/2022/Data/Discharge", 
+  full.names = TRUE
+)
+
+discharge <- bind_rows(
+  read_csv(paths[1], skip = 1),
+  read_csv(paths[2], skip = 1),
+  read_csv(paths[3], skip = 1)
+)
+
+discharge_meta <- read_csv(paths[4])
+
+discharge_flag <- 
+  tribble(
+    ~flag,  ~flag_description,
+      "A",      "Partial Day",
+      "D",              "Dry",
+      "R",          "Revised",
+      "B",   "Ice Conditions",
+      "E",        "Estimated"
+  )
+
+rm(paths)
+
 sbf_save_datas()
 sbf_save_objects()
 
