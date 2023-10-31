@@ -1,7 +1,8 @@
 data {
   int nsite;
   int nweek;
-  vector[nsite * nweek] doy;
+  real mean_discharge[nsite * nweek];
+  real shortwave[nsite * nweek];
   int <lower=0> N_y_obs; // number observed values
   int <lower=0> N_y_mis; // number missing values
   int <lower=1> i_y_obs[N_y_obs] ;  // [N_y_obs,T]
@@ -14,23 +15,14 @@ data {
   matrix [nsite, nsite] H;
   matrix [nsite, nsite] flow_con_mat;
   matrix [nsite, nsite] E;
-  
-  real <lower=1> alpha_max;
-}
-
-transformed data {
-  vector[nsite] DOY [nweek];
-
-  for (t in 1:nweek) {
-    DOY[t] = doy[((t - 1) * nsite + 1):(t * nsite)];
-  }
 }
 
 parameters {
   vector[N_y_mis] y_mis; // declaring the missing y
+  
   real bIntercept;
-  real bDoy;
-  real bDoy2;
+  real bShortwave;
+  real bDischarge;
   
   real<lower=0> sigma_nug; // sd of nugget effect
   real<lower=0> sigma_td; // sd of tail-down
@@ -44,6 +36,7 @@ parameters {
 
 transformed parameters {
   vector[nsite * nweek] y; // long vector of y
+  vector[nsite * nweek] eTempVec;
   vector[nsite] Y[nweek]; // array of y
   vector[nsite] epsilon[nweek]; // error term
   vector[nsite] mu[nweek]; // mean
@@ -69,15 +62,20 @@ transformed parameters {
   var_tu = sigma_tu^2; // variance tail-up
   var_ed = sigma_ed^2; // variance euclidean
   
+  // Main model
+  for (i in 1:(nweek * nsite)) {
+    eRunoff[i] = bInterceptRunoff + bPrecip * precipitation[i] + bAirTemp * air_temp[i] + bUpstreamWatershedArea * uwa[i]
+    eDischarge[i] = bInterceptDischarge + bRunoff * eRunoff[i]
+    eTempVec[i] = bInterceptTemp + bShortwave * shortwave[i] + bDischarge * mean_discharge[i];
+  }
+  
   // Define 1st mu and epsilon
-  // mu[1] = X[1] * beta;
-  mu[1] = exp(bIntercept + bDoy * DOY[1] + bDoy2 * DOY[1]^2);
+  mu[1] = eTempVec[1:nsite];
   epsilon[1] = Y[1] - mu[1];
   
   // Define rest of mu and epsilon; ----
   for (t in 2:nweek){
-    // mu[t] = X[t] * beta;
-    mu[t] = exp(bIntercept + bDoy * DOY[t] + bDoy2 * DOY[t]^2);
+    mu[t] = eTempVec[((t - 1) * nsite + 1):(t * nsite)];
     epsilon[t] = Y[t] - mu[t];
     mu[t] = mu[t] + phi .* epsilon[t - 1]; // element wise mult two vectors
   }
@@ -116,9 +114,9 @@ model {
   sigma_ed ~ exponential(1); // sd euclidean dist
   alpha_ed ~ normal(0, 10000) T[0, ];
   
-  bIntercept ~ normal(0, 2);
-  bDoy ~ normal(0, 2);
-  bDoy2 ~ normal(0, 2);
+  bIntercept ~ normal(0, 1);
+  bShortwave ~ normal(0, 0.5);
+  bDischarge ~ normal(0, 0.5);
   
   for (t in 1:nweek) {
     target += multi_normal_cholesky_lpdf(Y[t] | mu[t], cholesky_decompose(C_tu + C_td + C_ed + var_nug * I + 1e-6));
@@ -129,6 +127,5 @@ generated quantities {
   vector[nweek] log_lik;
   for (t in 1:nweek){
     log_lik[t] = multi_normal_cholesky_lpdf(Y[t] | mu[t], cholesky_decompose(C_tu + C_td + C_ed + var_nug * I + 1e-6));
-    // log_lik[t] = multi_normal_cholesky_lpdf(Y[t] | mu[t], cholesky_decompose(C_tu + C_td + var_nug * I + 1e-6));
   }
 }
