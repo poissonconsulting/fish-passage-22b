@@ -2,36 +2,25 @@ source("header.R")
 
 sbf_set_sub("read", "discharge")
 
-# Downloaded for sites "08JA015" "08JA023" "08JE004"
-# during the period 2019-07-13 to 2021-10-29 
-# from the Historical Hydrometric Database from the Canadian Water Office
-# https://wateroffice.ec.gc.ca/search/historical_e.html
-# on 2023-10-30
+# This is discharge data for the entire Fraser River basin from the 
+# Global Runoff Data Centre (GRDC)
+# Downloaded on 2023-10-31 from
+# https://portal.grdc.bafg.de/applications/public.html?publicuser=PublicUser#dataDownload/Subregions
+### Not going to be able to programatically download this data.
+dir <- file.path("~/Poisson/Data/fish-passage/2022/Data/Discharge/GRDC text")
+files <- list.files(dir, full.names = TRUE) %>% 
+  as_list()
 
-paths <- list.files(
-  "~/Poisson/Data/fish-passage/2022/Data/Discharge",
-  full.names = TRUE
-)
+discharge <- 
+  map(
+    .x = files, 
+    .f = \(x) {
+      read_csv(x, id = "file")
+    }
+  ) %>% 
+  list_rbind()
 
-discharge <- bind_rows(
-  read_csv(paths[1], skip = 1),
-  read_csv(paths[2], skip = 1),
-  read_csv(paths[3], skip = 1)
-)
-
-discharge_meta <- read_csv(paths[4])
-
-discharge_flag <-
-  tribble(
-    ~flag,  ~flag_description,
-    "A",      "Partial Day",
-    "D",              "Dry",
-    "R",          "Revised",
-    "B",   "Ice Conditions",
-    "E",        "Estimated"
-  )
-
-rm(paths)
+rm(dir, files)
 
 sbf_save_datas()
 
