@@ -7,7 +7,7 @@ sbf_set_sub("read", "discharge")
 # Downloaded on 2023-10-31 from
 # https://portal.grdc.bafg.de/applications/public.html?publicuser=PublicUser#dataDownload/Subregions
 ### Not going to be able to programatically download this data.
-dir <- file.path("~/Poisson/Data/fish-passage/2022/Data/Discharge/GRDC text")
+dir <- file.path(dir, "Data/Discharge/GRDC text")
 files <- list.files(dir, full.names = TRUE) %>% 
   as_list()
 
