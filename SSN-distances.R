@@ -1,7 +1,9 @@
 source("header.R")
 
-discharge_site <- sbf_load_data("discharge_site", sub = "tidy/discharge")
-water_temp_site <- sbf_load_data("water_temp_site", sub = "tidy/water-temp")
+sbf_set_sub("query")
+
+discharge_site <- sbf_load_data("discharge_site")
+water_temp_site <- sbf_load_data("water_temp_site")
 
 points_water_temp <- 
   water_temp_site %>% 
