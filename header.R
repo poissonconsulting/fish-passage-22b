@@ -16,7 +16,7 @@ if (getDoParWorkers() == 1) {
   registerDoParallel(4)
 }
 
-set_analysis_mode("report")
+set_analysis_mode("quick")
 
 rm(list = ls())
 graphics.off()
