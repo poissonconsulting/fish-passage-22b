@@ -14,20 +14,34 @@ discharge_site <-
     altitude = set_units(altitude_m_asl, "m")
   ) %>% 
   select(
-    station_id, river, station, latitude, longitude, altitude
+    station_id, river, station, Latitude = latitude, Longitude = longitude, 
+    altitude
   ) %>% 
-  distinct()
+  distinct() %>% 
+  ps_longlat_to_sfc()
+
+discharge_site_upstream <-
+  discharge_site %>% 
+  ps_sfc_to_longlat() %>% 
+  rowwise() %>% 
+  mutate(
+    geometry = hydroshed(Longitude, Latitude)$geometry
+  ) %>% 
+  ungroup() %>% 
+  ps_activate_sfc() %>% 
+  mutate(
+    upstream_area = st_area(geometry)
+  )
 
 discharge %<>% 
   group_by(station_id) %>% 
   mutate(missing = if_else2(any(is.na(value)), TRUE, FALSE)) %>% 
   ungroup() %>% 
   filter(!missing) %>% 
-  select(station_id, date, mean_discharge = value) %>% 
+  select(station_id, date, discharge = value) %>% 
   mutate(
-    mean_discharge = set_units(mean_discharge, "m^3/s")
+    discharge = set_units(discharge, "m^3/s")
   )
-
 
 sbf_set_sub("tidy", "discharge")
 sbf_save_datas()
