@@ -3,6 +3,19 @@ source("header.R")
 sbf_set_sub("clean", "water-temp")
 sbf_load_datas()
 
+water_temp_site_upstream <-
+  water_temp_site %>% 
+  ps_sfc_to_longlat() %>% 
+  rowwise() %>% 
+  mutate(
+    geometry = hydroshed(Longitude, Latitude)$geometry
+  ) %>% 
+  ungroup() %>% 
+  ps_activate_sfc() %>% 
+  mutate(
+    upstream_area = st_area(geometry)
+  )
+
 water_temp %<>%
   rename(site_description = site) %>%
   left_join(
@@ -17,11 +30,11 @@ water_temp %<>%
   # or during times the data was being downloaded
   mutate(
     new_flag = case_when(
+      problem ~ "I",
+      data_downloading ~ "D",
       flag == "F" ~ "F",
       flag == "B" ~ "B",
       flag == "P" ~ "P",
-      problem ~ "I",
-      data_downloading ~ "D",
       .default = NA_character_
     ),
     date = dtt_date(date_time),
