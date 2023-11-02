@@ -5,9 +5,8 @@ sbf_set_sub("read", "water-temp")
 # Water temp ----
 # Data downloaded programatically below
 # Backup data downloaded from https://zenodo.org/record/6426024#.ZEAqr-zMI0Q on 04-19-2023
-# dir <- file.path("~/Poisson/Data/fish-passage/2022/Data/Nechako water temp/Data")
-# dir <- file.path("~/Poisson/Clients - Transfer/New Graph/xxxxxxxx")
-# file_names <- list.files(dir, ".csv", full.names = TRUE)
+# dir2 <- file.path(dir, "Data/Nechako water temp/Data")
+# file_names <- list.files(dir2, ".csv", full.names = TRUE)
 
 # Water temp ----
 temp <- tempfile()
@@ -30,9 +29,8 @@ sbf_save_data(water_temp)
 # Water temp meta data
 # Downloaded programatically below
 # Backup data downloaded from https://zenodo.org/record/6426024#.ZEAqr-zMI0Q on 04-19-2023
-# dir <- file.path("~/Poisson/Data/fish-passage/2022/Data/Nechako water temp/NHG Data ReadMe.txt")
-# dir <- file.path("~/Poisson/Clients - Transfer/New Graph/xxxxxxxx")
-# water_temp_meta_data <- read_tsv(dir, skip = 3)
+# dir3 <- file.path(dir, "Data/Nechako water temp/NHG Data ReadMe.txt")
+# water_temp_meta_data <- read_tsv(dir3, skip = 3)
 
 download.file(
   "https://zenodo.org/record/6426024/files/NHG%20Data%20ReadMe.txt?download=1",
