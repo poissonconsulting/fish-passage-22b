@@ -1,14 +1,24 @@
 data {
   int nsite;
   int nweek;
-  real mean_discharge[nsite * nweek];
-  real shortwave[nsite * nweek];
+
   int <lower=0> N_y_obs; // number observed values
   int <lower=0> N_y_mis; // number missing values
-  int <lower=1> i_y_obs[N_y_obs] ;  // [N_y_obs,T]
-  int <lower=1> i_y_mis[N_y_mis] ;  // [N_y_mis,T]
-  vector[N_y_obs] y_obs;  // matrix[N_y_obs,1] y_obs[T];
+  int <lower=1> i_y_obs [N_y_obs] ;  // [N_y_obs,T]
+  int <lower=1> i_y_mis [N_y_mis] ;  // [N_y_mis,T]
+  vector [N_y_obs] y_obs;  // matrix[N_y_obs,1] y_obs[T];
   
+  real air_temp [nsite * nweek];
+  real evap_water [nsite * nweek];
+  real evap_total [nsite * nweek];
+  real snowmelt [nsite * nweek];
+  real runoff_subsurface [nsite * nweek];
+  real runoff_surface [nsite * nweek];
+  real net_solar_rad [nsite * nweek];
+  real precip [nsite * nweek];
+  real soil_vol_1 [nsite * nweek];
+  real discharge [nsite * nweek];
+
   matrix [nsite, nsite] W;
   matrix [nsite, nsite] D;
   matrix [nsite, nsite] I;
@@ -20,7 +30,7 @@ data {
 parameters {
   vector[N_y_mis] y_mis; // declaring the missing y
   
-  real bIntercept;
+  real bIntercept; 
   real bShortwave;
   real bDischarge;
   
@@ -36,10 +46,8 @@ parameters {
 
 transformed parameters {
   vector[nsite * nweek] y; // long vector of y
-  vector[nsite * nweek] eTempVec;
   vector[nsite] Y[nweek]; // array of y
   vector[nsite] epsilon[nweek]; // error term
-  vector[nsite] mu[nweek]; // mean
   matrix[nsite, nsite] C_tu; // tail-up cov
   matrix[nsite, nsite] C1; // tail-up cov
   matrix[nsite, nsite] C_td; // tail-down cov
@@ -47,7 +55,10 @@ transformed parameters {
   real <lower=0> var_nug; // nugget
   real <lower=0> var_td; // partial sill tail-down
   real <lower=0> var_tu; // partial sill tail-up
-  real <lower=0> var_ed; //  Euclidean dist var
+  real <lower=0> var_ed; // euclidean dist var
+  
+  vector[nsite * nweek] eTemp;
+  vector[nsite] mu [nweek];
   
   y[i_y_obs] = y_obs;
   y[i_y_mis] = y_mis;
@@ -62,18 +73,19 @@ transformed parameters {
   var_tu = sigma_tu^2; // variance tail-up
   var_ed = sigma_ed^2; // variance euclidean
   
-  // Main model
+  
+  // Temperature model
   for (i in 1:(nweek * nsite)) {
-    eTempVec[i] = bIntercept + bShortwave * shortwave[i] + bDischarge * mean_discharge[i];
+    eTemp[i] = bIntercept + bShortwave * net_solar_rad[i] + bDischarge * discharge[i];
   }
   
   // Define 1st mu and epsilon
-  mu[1] = eTempVec[1:nsite];
+  mu[1] = eTemp[1:nsite];
   epsilon[1] = Y[1] - mu[1];
   
   // Define rest of mu and epsilon; ----
   for (t in 2:nweek){
-    mu[t] = eTempVec[((t - 1) * nsite + 1):(t * nsite)];
+    mu[t] = eTemp[((t - 1) * nsite + 1):(t * nsite)];
     epsilon[t] = Y[t] - mu[t];
     mu[t] = mu[t] + phi .* epsilon[t - 1]; // element wise mult two vectors
   }
