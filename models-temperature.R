@@ -18,19 +18,44 @@ sbf_save_table(description, caption = "Parameter descriptions.")
 model <- model(
   code = read_file("temperature.stan"),
   modify_data = function(data) {
-    data$i_y_obs <- which(!is.na(data$mean_temp))
-    data$i_y_mis <- which(is.na(data$mean_temp))
+    data$i_y_obs <- which(!is.na(data$water_temp))
+    data$i_y_mis <- which(is.na(data$water_temp))
     data$N_y_obs <- length(data$i_y_obs)
     data$N_y_mis <- length(data$i_y_mis)
-    data$y_obs <- data$mean_temp[!is.na(data$mean_temp)]
+    data$y_obs <- data$water_temp[!is.na(data$water_temp)]
+    
     data$I <- diag(1, nrow = data$nsite, ncol = data$nsite)
-    data$D <- D[c("LTL", "TPL"), c("LTL", "TPL")]
-    data$W <- W[c("LTL", "TPL"), c("LTL", "TPL")]
-    data$H <- H[c("LTL", "TPL"), c("LTL", "TPL")]
-    data$flow_con_mat <- flow_con_mat[c("LTL", "TPL"), c("LTL", "TPL")]
-    data$E <- E[c("LTL", "TPL"), c("LTL", "TPL")]
-    # data$spec_heat_water <- 1000 # kg/m3
-    # data$density_water <- 41.8e3 # J/kg/˚C
+    data$D <- D
+    data$W <- W
+    data$H <- H
+    data$flow_con_mat <- flow_con_mat
+    data$E <- E
+    
+    data$dis_station_id <- as.integer(discharge$station_id)
+    data$dis_week <- as.integer(discharge$week)
+    data$dis_discharge <- discharge$discharge
+    data$dis_air_temp <- discharge$air_temp
+    data$dis_evap_water <- discharge$evap_water
+    data$dis_evap_total <- discharge$evap_total
+    data$dis_snowmelt <- discharge$snowmelt
+    data$dis_runoff_subsurface <- discharge$runoff_subsurface
+    data$dis_runoff_surface <- discharge$runoff_surface
+    data$dis_net_solar_rad <- discharge$net_solar_rad
+    data$dis_precip <- discharge$precip
+    data$dis_soil_vol_1 <- discharge$soil_vol_1
+    
+    data$nstation_id <- nlevels(discharge$station_id)
+    data$nweek_dis <- nlevels(discharge$week)
+    
+    chk_equal(data$nweek, data$nweek_dis)
+    
+    data$dis_I <- diag(1, nrow = data$nsite, ncol = data$nsite)
+    data$dis_D <- dis_D
+    data$dis_W <- dis_W
+    data$dis_H <- dis_H
+    data$dis_flow_con_mat <- dis_flow_con_mat
+    data$dis_E <- dis_E
+
     data
   },
   new_expr = "
@@ -42,12 +67,20 @@ model <- model(
       eED[i] <- sigma_ed^2 * exp(-3 * E[i] / alpha_ed)
     }",
   new_expr_vec = TRUE,
+  ### TODO: Is there a way to pass 2 dataframes to a model?
   select_data = list(
-    mean_temp = c(-2, 30, NA),
     site = factor(),
     week = factor(),
-    `mean_discharge*` = c(0, 50),
-    `shortwave*` = c(50, 1000),
+    water_temp = c(-2, 30, NA),
+    air_temp = c(-50, 50),
+    evap_water = c(1),
+    evap_total = c(1),
+    snowmelt = c(1),
+    runoff_subsurface = c(1),
+    runoff_surface = c(1),
+    net_solar_rad = c(1),
+    precip = c(1),
+    soil_vol_1 = c(1),
     H = c(0, 50 * 5000),
     E = c(0, 50 * 500)
   )
