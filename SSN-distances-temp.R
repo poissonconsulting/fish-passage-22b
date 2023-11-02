@@ -717,7 +717,7 @@ euclidean_distance <-
 rownames(euclidean_distance) <- points$site
 colnames(euclidean_distance) <- points$site
 
-sbf_set_sub("distance")
+sbf_set_sub("distance", "temp")
 # Save distance matrices
 sbf_save_object(downstream_hydrologic_distance, "downstream_hydrologic_distance")
 sbf_save_object(total_hydrologic_distance, "total_hydrologic_distance")
