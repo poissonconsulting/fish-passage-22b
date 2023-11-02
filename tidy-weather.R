@@ -72,7 +72,6 @@ us_weather_discharge_obs <-
   group_split() %>% 
   map(
     .f = \(x) {
-      browser()
       upstream_cells <- 
         st_join(x, weather_site, join = st_intersects) %>% 
         select(station_id, cell_id)
