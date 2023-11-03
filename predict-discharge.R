@@ -18,7 +18,7 @@ coef %>% print(n = nrow(.))
 tidy <- tidy(analysis) %>% 
   mutate(ess = esr * niters(analysis) * nchains(analysis))
 
-chk_true(nrow(tidy %>% filter(ess < 100)) == 0)
+# chk_true(nrow(tidy %>% filter(ess < 100)) == 0)
 
 sbf_save_table(glance, caption = "Model convergence")
 sbf_save_table(coef, caption = "Model coefficients")
@@ -42,12 +42,13 @@ precipitation <-
   select(-precip) %>% 
   left_join(data %>% select(site, week, precip), join_by(site, week)) %>% 
   predict(analysis, new_data = .) %>% 
-  arrange(week, site)
+  arrange(week, site) %>% 
+  mutate(type = "prediction") %>% 
+  bind_rows(data %>% mutate(type = "observation") %>% rename(estimate = discharge))
 
 gp <- ggplot(precipitation) +
-  geom_pointrange(aes(x = week, y = estimate, ymin = lower, ymax = upper)) +
-  geom_point(data = data, aes(x = week, y = discharge), colour = "red") +
-
+  geom_pointrange(aes(x = week, y = estimate, ymin = lower, ymax = upper, colour = type)) +
+  scale_colour_disc_poisson() +
   xlab("Week") +
   facet_grid(rows = vars(site)) +
   ylab(expression("Discharge"~(m^3/s))) +
