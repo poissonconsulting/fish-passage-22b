@@ -8,16 +8,16 @@ data {
   int <lower=1> i_y_mis [N_y_mis] ;  // [N_y_mis,T]
   vector [N_y_obs] y_obs;  // matrix[N_y_obs,1] y_obs[T];
   
-  real air_temp [nsite * nweek];
-  real evap_water [nsite * nweek];
-  real evap_total [nsite * nweek];
-  real snowmelt [nsite * nweek];
-  real runoff_subsurface [nsite * nweek];
-  real runoff_surface [nsite * nweek];
-  real net_solar_rad [nsite * nweek];
-  real precip [nsite * nweek];
-  real soil_vol_1 [nsite * nweek];
-  real discharge [nsite * nweek];
+  // real air_temp [nsite * nweek];
+  // real evap_water [nsite * nweek];
+  // real evap_total [nsite * nweek];
+  // real snowmelt [nsite * nweek];
+  // real runoff_subsurface [nsite * nweek];
+  // real runoff_surface [nsite * nweek];
+  // real net_solar_rad [nsite * nweek];
+  // real precip [nsite * nweek];
+  // real soil_vol_1 [nsite * nweek];
+  // real discharge [nsite * nweek];
 
   matrix [nsite, nsite] W;
   matrix [nsite, nsite] D;
@@ -31,8 +31,6 @@ parameters {
   vector[N_y_mis] y_mis; // declaring the missing y
   
   real bIntercept; 
-  real bShortwave;
-  real bDischarge;
   
   real<lower=0> sigma_nug; // sd of nugget effect
   real<lower=0> sigma_td; // sd of tail-down
@@ -76,7 +74,7 @@ transformed parameters {
   
   // Temperature model
   for (i in 1:(nweek * nsite)) {
-    eTemp[i] = bIntercept + bShortwave * net_solar_rad[i] + bDischarge * discharge[i];
+    eTemp[i] = bIntercept;
   }
   
   // Define 1st mu and epsilon
@@ -125,8 +123,6 @@ model {
   alpha_ed ~ normal(0, 10000) T[0, ];
   
   bIntercept ~ normal(0, 1);
-  bShortwave ~ normal(0, 0.5);
-  bDischarge ~ normal(0, 0.5);
   
   for (t in 1:nweek) {
     target += multi_normal_cholesky_lpdf(Y[t] | mu[t], cholesky_decompose(C_tu + C_td + C_ed + var_nug * I + 1e-6));

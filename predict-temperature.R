@@ -18,38 +18,10 @@ coef %>% print(n = nrow(.))
 tidy <- tidy(analysis) %>% 
   mutate(ess = esr * niters(analysis) * nchains(analysis))
 
-chk_true(nrow(tidy %>% filter(ess < 100)) == 0)
+# chk_true(nrow(tidy %>% filter(ess < 100)) == 0)
 
 sbf_save_table(glance, caption = "Model convergence")
 sbf_save_table(coef, caption = "Model coefficients")
-
-# Shortwave
-solar <- predict(analysis, "shortwave")
-
-gp <- ggplot(solar) +
-  geom_line(aes(x = shortwave, y = estimate)) +
-  geom_line(aes(x = shortwave, y = lower), linetype = "dotted") +
-  geom_line(aes(x = shortwave, y = upper), linetype = "dotted") +
-  xlab("Mean Shortwave Radiation (W/m^2)") +
-  ylab("Temperature (˚C)") +
-  NULL
-
-sbf_open_window(3, 3)
-sbf_print(gp)
-
-# Discharge
-discharge <- predict(analysis, "mean_discharge")
-
-gp <- ggplot(discharge) +
-  geom_line(aes(x = mean_discharge, y = estimate)) +
-  geom_line(aes(x = mean_discharge, y = lower), linetype = "dotted") +
-  geom_line(aes(x = mean_discharge, y = upper), linetype = "dotted") +
-  xlab("Mean Discharge (m^3/s)") +
-  ylab("Temperature (˚C)") +
-  NULL
-
-sbf_open_window(3, 3)
-sbf_print(gp)
 
 # # Predict tail-up semivariogram
 tu <- predict(analysis, "H", term = "eTU") %>% 

@@ -30,44 +30,17 @@ model <- model(
     data$H <- H
     data$flow_con_mat <- flow_con_mat
     data$E <- E
-    
-    data$dis_station_id <- as.integer(discharge$station_id)
-    data$dis_week <- as.integer(discharge$week)
-    data$dis_discharge <- discharge$discharge
-    data$dis_air_temp <- discharge$air_temp
-    data$dis_evap_water <- discharge$evap_water
-    data$dis_evap_total <- discharge$evap_total
-    data$dis_snowmelt <- discharge$snowmelt
-    data$dis_runoff_subsurface <- discharge$runoff_subsurface
-    data$dis_runoff_surface <- discharge$runoff_surface
-    data$dis_net_solar_rad <- discharge$net_solar_rad
-    data$dis_precip <- discharge$precip
-    data$dis_soil_vol_1 <- discharge$soil_vol_1
-    
-    data$nstation_id <- nlevels(discharge$station_id)
-    data$nweek_dis <- nlevels(discharge$week)
-    
-    chk_equal(data$nweek, data$nweek_dis)
-    
-    data$dis_I <- diag(1, nrow = data$nsite, ncol = data$nsite)
-    data$dis_D <- dis_D
-    data$dis_W <- dis_W
-    data$dis_H <- dis_H
-    data$dis_flow_con_mat <- dis_flow_con_mat
-    data$dis_E <- dis_E
-
     data
   },
   new_expr = "
     for (i in 1:nObs) {
-      prediction[i] <- bIntercept + bShortwave * shortwave[i] + bDischarge * mean_discharge[i];
+      prediction[i] <- bIntercept;
       # Predict over range of H values (total hydrologic distance)
       eTU[i] <- sigma_tu^2 * exp(-3 * H[i] / alpha_tu)
       eTD[i] <- sigma_td^2 * exp(-3 * H[i] / alpha_td) # Flow-unconnected just sums distance to common confluence
       eED[i] <- sigma_ed^2 * exp(-3 * E[i] / alpha_ed)
     }",
   new_expr_vec = TRUE,
-  ### TODO: Is there a way to pass 2 dataframes to a model?
   select_data = list(
     site = factor(),
     week = factor(),
