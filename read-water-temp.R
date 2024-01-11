@@ -14,10 +14,10 @@ download.file("https://zenodo.org/record/6426024/files/Data.zip?download=1", tem
 file_names <- unzip(temp, list = TRUE)$Name
 unzip(temp)
 
-water_temp <- list()
-for (i in 1:length(file_names)) {
-  water_temp[[i]] <- read_csv(file_names[i], id = "file")
-}
+water_temp <- map(
+  .x = file_names,
+  .f = \(x) read_csv(x, id = "file")
+)
 
 water_temp <- list_rbind(water_temp)
 
