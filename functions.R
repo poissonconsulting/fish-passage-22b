@@ -120,3 +120,102 @@ partition_div <- function(fit) {
   
   return(list(div_params, nondiv_params))
 }
+
+# create a bash file to download data from pcic
+pcic_dl_sh <- function(
+    # define the type of data ie. Baseflow or Runoff
+  var = "BASEFLOW",
+  # define the model and scenario
+  model = "ACCESS1-0_rcp85",
+  # define the location of the data directory to download to
+  dir_data = "~/Dropbox/New Graph/fish-passage-22/Data/Discharge/pcic",
+  # Define the bounding box of the area of interest
+  lat_min = 53.32,
+  lat_max = 54.89,
+  lon_min = -127.53,
+  lon_max = -122.92,
+  # define the date range of interest
+  date_start = "2019-07-13",
+  date_end = "2021-10-29",
+  append = FALSE){
+  date_start = as.Date(date_start)
+  date_end = as.Date(date_end)
+  
+  # select the url of specific model and variable
+  url <- dat_br %>% 
+    dplyr::filter(str_detect(name, model) & str_detect(name, var)) %>% 
+    pull(url)
+  
+  # Open the netCDF file
+  nc_data <- nc_open(url)
+  
+  # Print an overview of the file
+  # print(nc_data)
+  
+  # Read variables
+  time <- ncvar_get(nc_data, "time")
+  lat <- ncvar_get(nc_data, "lat")
+  lon <- ncvar_get(nc_data, "lon")
+  
+  # Inspect the variables
+  # print(time)
+  # print(lat)
+  # print(lon)
+  
+  # Convert these dates into "days since {date_origin}"
+  #extract the origin date 
+  date_origin <- str_extract(nc_data$dim$time$units, "\\d{4}-\\d{1,2}-\\d{1,2}") %>% 
+    as.Date()
+  
+  # target_dates <- as.Date(dates)
+  days_start_idx <- as.numeric(date_start - date_origin)
+  days_end_idx <- as.numeric(date_end - date_origin)
+  
+  # Find index of the value that are closest to your target lat/lon
+  
+  
+  lat_min_idx <- which.max(lat[lat < lat_min])
+  # we actually want the index from the original not the index of the result
+  lat_max_idx <- which(lat == min(lat[lat > lat_max]))
+  lon_min_idx <- which.max(lon[lon < lon_min])
+  lon_max_idx <- which(lon == min(lon[lon > lon_max]))
+  
+  
+  # Close the ncdf4 file connection
+  nc_close(nc_data)
+  
+  path <- paste0(path.expand(dir_data), "/", str_to_lower(var), ".nc")
+  
+  str <- paste0(
+    "curl -o ",
+    shQuote(path, type = "sh"),
+    " '",
+    url, ".nc?", var, "'$(printf %s '[", days_start_idx, ":", days_end_idx, "][",
+    lat_min_idx, ":", lat_max_idx, "][", lon_min_idx, ":", lon_max_idx, "]'|jq -sRr @uri)"
+  )
+  # insert switch so that append is controlled by append param
+  if(identical(append,FALSE)){
+    # because our dropbox folder has a space in the path it is complex to use the path in the shell script
+    # so we do it here
+    dir.create(dir_data)
+    
+    write_lines(
+      glue::glue(
+        "#!/bin/bash",
+        "\n",
+        "set -euxo pipefail",
+        "\n\n\n",
+        # this is how we would do it if we didn't have a wack dropbox folder name. ha
+        # "mkdir -p \"{dir_data}\"",
+        # "\n",
+        str), 
+        file = "pcic_dl.sh")
+  }else(write_lines(
+    paste0("\n", str), "pcic_dl.sh", append = TRUE)
+  )
+}
+  
+  
+  
+  
+  
