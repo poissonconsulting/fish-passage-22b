@@ -123,9 +123,10 @@ partition_div <- function(fit) {
 
 # create a bash file to download data from pcic
 pcic_dl_sh <- function(
+  pcic_url_catalog = "https://data.pacificclimate.org/portal/hydro_model_out/catalog/catalog.json",
     # define the type of data ie. Baseflow or Runoff
   var = "BASEFLOW",
-  # define the model and scenario
+  # define the model and scenario - should seperate
   model = "ACCESS1-0_rcp85",
   # define the location of the data directory to download to
   dir_data = "~/Dropbox/New Graph/fish-passage-22/Data/Discharge/pcic",
@@ -138,11 +139,21 @@ pcic_dl_sh <- function(
   date_start = "2019-07-13",
   date_end = "2021-10-29",
   append = FALSE){
+  
+  # Read the JSON data into R
+  json_data <- jsonlite::fromJSON(pcic_url_catalog) 
+  
+  dat  <- tibble::tibble(
+    name = names(json_data),
+    url = unlist(json_data)
+  )
+  
+  
   date_start = as.Date(date_start)
   date_end = as.Date(date_end)
   
   # select the url of specific model and variable
-  url <- dat_br %>% 
+  url <- dat %>% 
     dplyr::filter(str_detect(name, model) & str_detect(name, var)) %>% 
     pull(url)
   
@@ -172,16 +183,13 @@ pcic_dl_sh <- function(
   days_end_idx <- as.numeric(date_end - date_origin)
   
   # Find index of the value that are closest to your target lat/lon
-  
-  
   lat_min_idx <- which.max(lat[lat < lat_min])
-  # we actually want the index from the original not the index of the result
-  lat_max_idx <- which(lat == min(lat[lat > lat_max]))
   lon_min_idx <- which.max(lon[lon < lon_min])
+  # we want the index from the original dataset not the index of the result
+  lat_max_idx <- which(lat == min(lat[lat > lat_max]))
   lon_max_idx <- which(lon == min(lon[lon > lon_max]))
   
-  
-  # Close the ncdf4 file connection
+    # Close the ncdf4 file connection
   nc_close(nc_data)
   
   path <- paste0(path.expand(dir_data), "/", str_to_lower(var), ".nc")
@@ -190,7 +198,9 @@ pcic_dl_sh <- function(
     "curl -o ",
     shQuote(path, type = "sh"),
     " '",
-    url, ".nc?", var, "'$(printf %s '[", days_start_idx, ":", days_end_idx, "][",
+    url, ".nc?", var, 
+    "'$(echo '[", 
+    days_start_idx, ":", days_end_idx, "][",
     lat_min_idx, ":", lat_max_idx, "][", lon_min_idx, ":", lon_max_idx, "]'|jq -sRr @uri)"
   )
   # insert switch so that append is controlled by append param
@@ -205,7 +215,7 @@ pcic_dl_sh <- function(
         "\n",
         "set -euxo pipefail",
         "\n\n\n",
-        # this is how we would do it if we didn't have a wack dropbox folder name. ha
+        # this is how we would create the directory in the bash file if we didn't have a wack dropbox folder name. ha
         # "mkdir -p \"{dir_data}\"",
         # "\n",
         str), 
