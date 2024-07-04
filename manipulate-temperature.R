@@ -12,10 +12,10 @@ sbf_set_sub("prepare")
 sbf_load_datas()
 
 water_temp %<>% 
-  ## Add in predicted discharge data!
   mutate(
     H = seq(min(H), max(H) * 50, length.out = n()),
-    E = seq(min(E), max(E) * 50, length.out = n())
+    E = seq(min(E), max(E) * 50, length.out = n()),
+    nsite = nlevels(site)
   ) %>% 
   ### Must be arranged in this order for the model
   arrange(week, site)

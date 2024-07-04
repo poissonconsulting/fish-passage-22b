@@ -8,16 +8,10 @@ data {
   int <lower=1> i_y_mis [N_y_mis] ;  // [N_y_mis,T]
   vector [N_y_obs] y_obs;  // matrix[N_y_obs,1] y_obs[T];
   
-  // real air_temp [nsite * nweek];
-  // real evap_water [nsite * nweek];
-  // real evap_total [nsite * nweek];
-  // real snowmelt [nsite * nweek];
-  // real runoff_subsurface [nsite * nweek];
-  // real runoff_surface [nsite * nweek];
+  real air_temp [nsite * nweek];
   // real net_solar_rad [nsite * nweek];
-  // real precip [nsite * nweek];
-  // real soil_vol_1 [nsite * nweek];
-  // real discharge [nsite * nweek];
+  real discharge [nsite * nweek];
+  int<lower=0> site [nsite * nweek];
 
   matrix [nsite, nsite] W;
   matrix [nsite, nsite] D;
@@ -30,7 +24,11 @@ data {
 parameters {
   vector[N_y_mis] y_mis; // declaring the missing y
   
-  real bIntercept; 
+  // Logistic w air temp
+  real bTempAlpha;
+  real bTempGamma;
+  real bTempBeta;
+  real bTempMu;
   
   real<lower=0> sigma_nug; // sd of nugget effect
   real<lower=0> sigma_td; // sd of tail-down
@@ -39,7 +37,12 @@ parameters {
   real<lower=0> alpha_tu; // range of tail-up model
   real<lower=0> sigma_ed; // sd of euclidean distance model
   real<lower=0> alpha_ed; // range of euclidean distance model
-  vector <lower=-1, upper=1> [nsite] phi; // vector of autoregression pars (btwn -1 and 1 to ensure stationarity)
+  
+  // vector <lower=-1, upper=1> [nsite] phi; // vector of autoregression pars (btwn -1 and 1 to ensure stationarity)
+  real bCorr;
+  real bCorrDischarge;
+  real<lower=0> sCorrSite;
+  real bCorrSite[nsite];
 }
 
 transformed parameters {
@@ -55,14 +58,18 @@ transformed parameters {
   real <lower=0> var_tu; // partial sill tail-up
   real <lower=0> var_ed; // euclidean dist var
   
+  vector[nsite * nweek] eHeat;
   vector[nsite * nweek] eTemp;
+  vector[nsite * nweek] eTempCorr;
   vector[nsite] mu [nweek];
+  vector[nsite] phi[nweek];
+  vector[nweek] eLogLik;
   
   y[i_y_obs] = y_obs;
   y[i_y_mis] = y_mis;
   
   // Place observations into matrices
-  for (t in 1:nweek){
+  for (t in 1:nweek) {
     Y[t] = y[((t - 1) * nsite + 1):(t * nsite)];
   }
 
@@ -71,10 +78,16 @@ transformed parameters {
   var_tu = sigma_tu^2; // variance tail-up
   var_ed = sigma_ed^2; // variance euclidean
   
-  
   // Temperature model
   for (i in 1:(nweek * nsite)) {
-    eTemp[i] = bIntercept;
+    eTemp[i] = bTempMu + (bTempAlpha - bTempMu) / (1 + exp(bTempGamma * (bTempBeta - air_temp[i])));
+  }
+  
+  // Model for temporal autocorrelation
+  for (t in 1:nweek) {
+    for (i in 1:nsite) {
+      phi[t, i] = inv_logit(bCorr + bCorrDischarge * discharge[(t - 1) * nsite + i] + bCorrSite[site[i]]);
+    }
   }
   
   // Define 1st mu and epsilon
@@ -85,7 +98,12 @@ transformed parameters {
   for (t in 2:nweek){
     mu[t] = eTemp[((t - 1) * nsite + 1):(t * nsite)];
     epsilon[t] = Y[t] - mu[t];
-    mu[t] = mu[t] + phi .* epsilon[t - 1]; // element wise mult two vectors
+    mu[t] = mu[t] + phi[t] .* epsilon[t - 1]; // element-wise mult two vectors
+  }
+  
+  // Save expected water temp value inclusive of temporal autocorrelation
+  for (t in 1:nweek) { // arrange by week then by site
+    eTempCorr[(t - 1) * nsite + 1:(t * nsite)] = to_vector(mu[t]);
   }
   
   // Covariance matrices ----
@@ -107,6 +125,11 @@ transformed parameters {
   
   // Euclidean exponential model
   C_ed = var_ed * exp(- 3 * E / alpha_ed); // exponential model
+  
+  // Save log-likelihood
+  for (t in 1:nweek) {
+    eLogLik[t] = multi_normal_cholesky_lpdf(Y[t] | mu[t], cholesky_decompose(C_tu + C_td + C_ed + var_nug * I + 1e-6));
+  }
 }
 
 model {
@@ -115,23 +138,24 @@ model {
   }
   
   sigma_nug ~ exponential(0.1); // sd nugget
-  sigma_tu ~ exponential(0.5);  // sd tail-up
+  sigma_tu ~ exponential(0.5); // sd tail-up
   alpha_tu ~ normal(0, 10000) T[0, ];
   sigma_td ~ exponential(2); // sd tail-down
   alpha_td ~ normal(0, 10000) T[0, ];
   sigma_ed ~ exponential(1); // sd euclidean dist
   alpha_ed ~ normal(0, 10000) T[0, ];
   
-  bIntercept ~ normal(0, 1);
+  bTempAlpha ~ normal(25, 5);
+  bTempGamma ~ normal(0, 1);
+  bTempBeta ~ normal(10, 5);
+  bTempMu ~ normal(0, 0.5);
+  
+  bCorr ~ normal(0, 2);
+  bCorrDischarge ~ normal(0, 2);
+  sCorrSite ~ exponential(1);
+  bCorrSite ~ normal(0, sCorrSite);
   
   for (t in 1:nweek) {
     target += multi_normal_cholesky_lpdf(Y[t] | mu[t], cholesky_decompose(C_tu + C_td + C_ed + var_nug * I + 1e-6));
-  }
-} 
-
-generated quantities {
-  vector[nweek] log_lik;
-  for (t in 1:nweek){
-    log_lik[t] = multi_normal_cholesky_lpdf(Y[t] | mu[t], cholesky_decompose(C_tu + C_td + C_ed + var_nug * I + 1e-6));
   }
 }
