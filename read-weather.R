@@ -2,11 +2,11 @@ source("header.R")
 
 sbf_set_sub("read", "weather")
 
-# This is weather data for 
+# This is hourly weather data for 
 # July 2019 - October 2021 downloaded on 10/31/23 
 # for the area 
 # longitude: -127.53 to -122.92
-# latitude: 23.32 to 54.89 
+# latitude: 53.32 to 54.89 
 # from: https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-land?tab=form
 
 # Including the following variables:
