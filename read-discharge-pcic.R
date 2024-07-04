@@ -1,9 +1,4 @@
-library(ncdf4)
-library(tidyverse)
-library(jsonlite)
-library(stringr)
-library(lubridate)
-
+source("header.R")
 
 # Read the JSON data into R
 # json_data <- jsonlite::fromJSON("https://data.pacificclimate.org/portal/hydro_model_out/catalog/catalog.json") 
@@ -40,8 +35,9 @@ library(lubridate)
 
 
 # make a bash file that can be run with `bash pcic_dl.sh` on commandline.
-pcic_dl_sh()
+pcic_dl_sh(dir_data = file.path(dir, "Data/Discharge/pcic"))
 pcic_dl_sh(var = "RUNOFF", 
+           dir_data = file.path(dir, "Data/Discharge/pcic"),
            append = TRUE)
 
 # run the file to generate the output
