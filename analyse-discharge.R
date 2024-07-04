@@ -5,6 +5,8 @@ sbf_set_sub("discharge")
 sbf_load_datas()
 sbf_load_objects()
 
+# sbf_set_sub("discharge-simple")
+
 source("models-discharge.R")
 
 analysis <- analyse(model, data = data, nthin = 1L)

@@ -22,9 +22,25 @@ data {
   // real us_snowmelt[nsite * nweek];
   // real us_precip[nsite * nweek];
   // real us_runoff_surface[nsite * nweek];
-  // real upstream_area[nsite * nweek];
+  // real upstream_area [nsite * nweek];
   
-  real precip [nsite * nweek];
+  // real lag_us_precip [nsite * nweek];
+  // real lag_us_snowmelt [nsite * nweek];
+  // real precip_vol_lag [nsite * nweek];
+  // real snowmelt_vol_lag [nsite * nweek];
+  // real precip_vol [nsite * nweek];
+  // real snowmelt_vol [nsite * nweek];
+  // real mean_us_precip [nsite * nweek];
+  // real mean_us_snowmelt [nsite * nweek];
+  real sum_us_precip [nsite * nweek];
+  real sum_us_snowmelt [nsite * nweek];
+  // real precip [nsite * nweek];
+  // real snowmelt [nsite * nweek];
+  // int i_baseline[nsite];
+  // real baseline[nsite];
+  // real upstream_area[nsite];
+  int <lower=0> site[nsite * nweek];
+  // real baseline[nsite * nweek];
 
   matrix [nsite, nsite] W;
   matrix [nsite, nsite] D;
@@ -37,8 +53,15 @@ data {
 parameters {
   vector[N_y_mis] y_mis; // declaring the missing y
   
-  real bInterceptDischarge;
+  // real bInterceptBaseline;
+  // real bAreaBaseline;
+  // real <lower=0> sBaseline;
+  // real bPrecipLag;
+  // real bSnowmeltLag;
+  // real bArea;
+  real bIntercept;
   real bPrecip;
+  real bSnowmelt;
   
   real<lower=0> sigma_nug; // sd of nugget effect
   // real<lower=0> sigma_td; // sd of tail-down
@@ -66,6 +89,7 @@ transformed parameters {
   // vector[nsite * nweek] eRunoff;
   vector[nsite * nweek] eDischarge;
   vector[nsite] mu [nweek];
+  // real eBaseline[nsite];
   
   y[i_y_obs] = y_obs;
   y[i_y_mis] = y_mis;
@@ -80,10 +104,14 @@ transformed parameters {
   var_tu = sigma_tu^2; // variance tail-up
   // var_ed = sigma_ed^2; // variance euclidean
   
+  // // Baseline model
+  // for (i in 1:nsite) {
+  //   eBaseline[i] = bInterceptBaseline + bAreaBaseline * log(upstream_area[i]);
+  // }
   
   // Temperature model
   for (i in 1:(nweek * nsite)) {
-    eDischarge[i] = exp(bInterceptDischarge + bPrecip * precip[i]);
+    eDischarge[i] = exp(bIntercept + bPrecip * sum_us_precip[i] + bSnowmelt * sum_us_snowmelt[i]);
   }
   
   // Define 1st mu and epsilon
@@ -123,14 +151,26 @@ model {
   
   sigma_nug ~ exponential(0.1); // sd nugget
   sigma_tu ~ exponential(0.01);  // sd tail-up
-  alpha_tu ~ normal(0, 5000) T[0, ];
+  alpha_tu ~ normal(0, 10000) T[0, ];
   // sigma_td ~ exponential(1); // sd tail-down
   // alpha_td ~ normal(0, 1000) T[0, ];
   // sigma_ed ~ exponential(1); // sd euclidean dist
   // alpha_ed ~ normal(0, 1000) T[0, ];
   
-  bInterceptDischarge ~ normal(0, 2);
+  // bInterceptBaseline ~ normal(0, 2);
+  // bAreaBaseline ~ normal(0, 2);
+  // sBaseline ~ exponential(1);
+  
+  bIntercept ~ normal(0, 2);
+  // bPrecipLag ~ normal(0, 1000);
+  // bSnowmeltLag ~ normal(0, 1000);
   bPrecip ~ normal(0, 2);
+  bSnowmelt ~ normal(0, 2);
+  // bIntercept ~ normal(0, 2);
+  
+  // for (i in 1:(nsite * nweek)) {
+  //   baseline[i] ~ lognormal(eBaseline[site[i]], sBaseline);
+  // }
   
   for (t in 1:nweek) {
     // Removed C_ed and C_td
