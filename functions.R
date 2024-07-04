@@ -124,7 +124,7 @@ partition_div <- function(fit) {
 # create a bash file to download data from pcic
 pcic_dl_sh <- function(
   pcic_url_catalog = "https://data.pacificclimate.org/portal/hydro_model_out/catalog/catalog.json",
-    # define the type of data ie. Baseflow or Runoff
+  # define the type of data ie. Baseflow or Runoff
   var = "BASEFLOW",
   # define the model and scenario - should seperate
   model = "ACCESS1-0_rcp85",
@@ -143,11 +143,10 @@ pcic_dl_sh <- function(
   # Read the JSON data into R
   json_data <- jsonlite::fromJSON(pcic_url_catalog) 
   
-  dat  <- tibble::tibble(
+  dat <- tibble::tibble(
     name = names(json_data),
     url = unlist(json_data)
   )
-  
   
   date_start = as.Date(date_start)
   date_end = as.Date(date_end)
@@ -223,6 +222,72 @@ pcic_dl_sh <- function(
   }else(write_lines(
     paste0("\n", str), "pcic_dl.sh", append = TRUE)
   )
+}
+
+# PSIS/WAIC
+ic_calc <- function(analysis, data = data_set(analysis)){
+  log_lik <- mcmc_derive_data(analysis, new_data = data, term = "log_lik")
+  arr <- aperm(unclass(as.mcarray(log_lik$mcmc)), perm = c(2, 3, 1), resize = TRUE)
+  r_eff <- relative_eff(exp(arr))
+  waic <- waic(arr)
+  loo <- loo(arr, r_eff = r_eff, save_psis = TRUE, cores = getDoParWorkers())
+  list(waic = waic,
+       loo = loo)
+}
+
+ic_table <- function(ic_calcs, ic = "waic"){
+  chk_subset(ic, c("waic", "loo", "psis"))
+  if(ic == "psis")
+    ic <- "loo"
+  
+  ic2 <- ic
+  if(ic == "loo")
+    ic2 <- "looic"
+  
+  x <- loo_compare(map(ic_calcs, ~.[[ic]])) |>
+    as_tibble(rownames = "model") |> 
+    rename_all(~ str_replace(., ic2, "ic")) |> 
+    rename_all(~ str_replace(., ic, "ic")) |> 
+    rename(npars = p_ic)
+  
+  looc <<- x
+  
+  d_se <- map_dbl(2:nrow(x), function(i){
+    first <- ic_calcs[[x$model[1]]][[ic]]$pointwise[,ic2]
+    other <- ic_calcs[[x$model[i]]][[ic]]$pointwise[,ic2]
+    diff_ic <- first - other
+    sqrt(length(first) * var(diff_ic))
+  })
+  
+  if(ic == "loo"){
+    k_outliers <- map_dbl(ic_calcs, function(x){
+      y <- x$loo$psis_object |> 
+        pareto_k_table() |> 
+        as_tibble() 
+      sum(y$Proportion[2:3])
+    })
+  } else {
+    k_outliers <- NULL
+  }
+  
+  k_outliers_df <- tibble(model = names(ic_calcs), k_outliers = k_outliers)
+  
+  x |>
+    mutate(weight = exp(-0.5 * (ic - min(ic))) / 
+             (sum(exp(-0.5 * (ic - min(ic))))),
+           delta_ic = ic - min(ic),
+           delta_se = c(0, d_se)) |> 
+    left_join(k_outliers_df, "model") |> 
+    dplyr::select(
+      model,
+      ic,
+      se = se_ic,
+      npars,
+      `delta ic` = delta_ic,
+      `delta se` = delta_se,
+      weight,
+      `k outliers` = k_outliers
+    )
 }
   
   
