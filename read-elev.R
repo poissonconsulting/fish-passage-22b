@@ -1,8 +1,7 @@
 source("header.R")
 
 # Elev ----
-dir <- "~/Poisson/Data/fish-passage/2022/Data/SSN/Elev"
-
+dir <- file.path(dir, "Data/SSN/Elev")
 elev_files <- list.files(dir, recursive = TRUE, full.names = TRUE, pattern = "\\.tif$")
 
 elev_rast <- map(
