@@ -728,6 +728,9 @@ segment_afv <-
 points %<>% 
   left_join(segment_afv, join_by(segment_id))
 
+sbf_save_data(points, x_name = "points", sub = "distance")
+sbf_save_data(segments, x_name = "stream_network", sub = "distance")
+
 weight_matrix <- matrix(NA, nrow = nsites, ncol = nsites)
 rownames(weight_matrix) <- points$site
 colnames(weight_matrix) <- points$site
