@@ -1,19 +1,19 @@
 source("header.R")
 
 sites <- sbf_load_data("water_temp_site", sub = "query")
-distances <- sbf_load_object("flow_connected", sub = "distance")
+distances <- sbf_load_object("flow_connected", sub = "distance/discharge")
 water_temp <- sbf_load_data("water_temp", sub = "query")
 
-# dem_path <- "output/objects/ssn/elev.tif"
-# rast <- raster::raster(dem_path)
-# raster::crs(rast) <- crs
-# 
-# slope_aspect <- raster::terrain(
-#   rast, 
-#   opt = c("slope", "aspect"), 
-#   unit = "degrees",
-#   neighbors = 4
-# )
+dem_path <- "output/objects/ssn/elev.tif"
+rast <- raster::raster(dem_path)
+raster::crs(rast) <- crs
+
+slope_aspect <- raster::terrain(
+  rast,
+  opt = c("slope", "aspect"),
+  unit = "degrees",
+  neighbors = 4
+)
 
 sites %<>% 
   filter(site %in% rownames(distances)) %>% 
@@ -30,15 +30,15 @@ sites %<>%
 # 
 # aspects <- raster::rasterToPoints(slope_aspect$aspect, spatial = FALSE)
 # 
-# sites %>% 
-#   rename(Latitude = latitude, Longitude = longitude) %>% 
+# sites %>%
+#   rename(Latitude = latitude, Longitude = longitude) %>%
 #   ps_longlat_to_sfc()
 # 
-# slopes2 <- 
+# slopes2 <-
 #   raster::extract(
-#     slope_aspect$slope, 
+#     slope_aspect$slope,
 #     SpatialPoints(
-#       cbind(sites$longitude[1], sites$latitude[1]), 
+#       cbind(sites$longitude[1], sites$latitude[1]),
 #       proj4string = raster::crs(rast)
 #     )
 #   )
