@@ -37,16 +37,28 @@ weather %<>%
     soil_vol_1 = set_units(soil_vol_1, "m^3")
   )
 
-# Check data has all the months
+# Check no months of data are missing
 chk_identical(
   weather %>% 
     group_by(latitude, longitude) %>% 
     filter(cur_group_id() == 1) %>% 
+    ungroup() %>% 
     arrange(date_time) %>% 
     pull(date_time),
   seq(min(weather$date_time), max(weather$date_time), by = "hour")
 )
-  
+
+# Check correct range of data
+chk_equal(
+  weather %>% min(date), 
+  bounding_dates[1]
+)
+
+chk_equal(
+  weather %>% max(date), 
+  bounding_dates[2]
+)
+
 sbf_set_sub("clean", "weather")
 sbf_save_datas()
 

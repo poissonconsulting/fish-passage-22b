@@ -98,8 +98,9 @@ sites <-
   ps_sfcs_to_crs(crs = crs) %>% 
   select(site, geometry)
 
-# Write shapefile to calculate SSN object
-# st_write(sites, "output/objects/ssn/site.shp", append = FALSE)
+if (FALSE) {
+  st_write(sites, "output/objects/ssn/site.shp", append = FALSE)
+}
 
 water_temp_site %<>%
   ps_longlat_to_sfc()
@@ -193,7 +194,8 @@ water_temp_notes <-
   ) %>%
   select(site, date_time_start_problem, date_time_end_problem, comment)
 
-### ^ Manually checked the problematic sites to see if flag == 'F' during the specified period: none had the flag all the way through the suspected problematic periods.
+### ^ Manually checked the problematic sites to see if flag == 'F' during the specified period: 
+### none had the flag all the way through the suspected problematic periods.
 
 water_temp_problem_periods <- 
   water_temp_notes %>% 
