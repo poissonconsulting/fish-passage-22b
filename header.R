@@ -3,7 +3,6 @@ library(reticulate)
 library(ncdf4)
 library(tidync)
 library(jsonlite)
-library(loo)
 library(zoo)
 library(gsdd)
 
