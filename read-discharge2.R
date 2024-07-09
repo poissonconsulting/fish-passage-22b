@@ -2,13 +2,13 @@ source("header.R")
 
 baseflow_path <- file.path(dir, "Data/Discharge/pcic/baseflow.nc")
 
-baseflow <- tidync(baseflow_path) %>%
-  hyper_tibble()
-
 ncin <- nc_open(baseflow_path)
 origin <- ncin$dim$time$units # Days since 1945-01-01 00:00:00
 nc_close(ncin)
 origin <- str_extract(origin, "(?<=days since ).*")
+
+baseflow <- tidync(baseflow_path) %>%
+  hyper_tibble()
 
 baseflow %<>% # units: mm
   mutate(origin = origin)

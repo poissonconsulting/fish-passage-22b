@@ -2,28 +2,46 @@ source("header.R")
 
 sbf_set_sub("read", "air-temp")
 
-# Air temp ----
-# This is air temp for July 2019 downloaded on 04/25/23 for the area 
+# This is hourly 2m air temperature data for 
+# January 2019 - December 2021
+# for the area 
 # longitude: -127.53 to -122.92
-# latitude: 23.32 to 54.89 
+# latitude: 53.32 to 54.89 
 # from: https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-land?tab=form
-### Not going to be able to programatically download this data. 
-dir <- file.path("~/Poisson/Data/fish-passage/2022/Data/Air temp/data.nc")
-# dir <- file.path("~/Poisson/Clients - Transfer/New Graph/xxxxxxxx")
+# using an API 
+dir2 <- file.path(getwd(), "output/data/air-temp")
+if (!file.exists(file.path(dir2, "2019.nc"))) {
+  # Change to directory to dropbox folder if API doesn't work
+  dir2 <- file.path(dir, "Data/ERA5")
+}
 
-air_temp <- tidync(dir) %>%  # Can filter this before making it a tibble using 
-  # `hyper_filter()` https://rdrr.io/cran/tidync/f/vignettes/netcdf-with-tidync.Rmd
-  hyper_tibble()
+files <- list.files(dir2, full.names = TRUE) %>% 
+  str_subset(., pattern = "x.rds$", negate = TRUE) %>% 
+  as_list()
 
-ncin <- nc_open(dir)
-air_temp_origin <- ncin$dim$time$units # UTC
-nc_close(ncin)
+air_temp <-
+  map(
+    .x = files,
+    .f = \(x) {
+      y <- tidync(x) %>%
+        hyper_tibble()
+      
+      ncin <- nc_open(x)
+      x_origin <- ncin$dim$time$units # UTC
+      nc_close(ncin)
+      x_origin <- str_extract(x_origin, "(?<=hours since ).*")
+      
+      y <- y %>% 
+        mutate(origin = x_origin)
+      y
+    }
+  ) %>% 
+  list_rbind()
 
-rm(dir, ncin)
+rm(dir, files)
 
 sbf_save_datas()
-sbf_save_object(air_temp_origin)
 
-if(FALSE) {
+if (FALSE) {
   sbf_compare_data_archive()
 }

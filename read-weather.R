@@ -4,6 +4,7 @@ sbf_set_sub("read", "weather")
 
 # This is hourly weather data for 
 # July 2019 - October 2021 downloaded on 10/31/23 
+# January - June 2019 and November - December 2021 downloaded 07/04/24 (air temp only)
 # for the area 
 # longitude: -127.53 to -122.92
 # latitude: 53.32 to 54.89 
