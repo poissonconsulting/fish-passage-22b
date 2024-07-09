@@ -191,7 +191,6 @@ pcic_dl_sh <- function(
   
   path <- paste0(path.expand(dir_data), "/", str_to_lower(var), ".nc")
   
-  # figure out where jq is installed
   str <- paste0(
     "curl -o ",
     shQuote(path, type = "sh"),
@@ -213,6 +212,7 @@ pcic_dl_sh <- function(
         "\n",
         "set -euxo pipefail",
         "\n\n",
+        # Add different path for Poisson computers to jq
         if_else2(dir.exists("~/Poisson"), "export PATH=/opt/homebrew/bin:$PATH", ""),
         "\n\n\n",
         # this is how we would create the directory in the bash file if we didn't have a wack dropbox folder name. ha
