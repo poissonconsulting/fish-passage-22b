@@ -81,7 +81,10 @@ stream_network_detail_list <- map(
   )
 )
 
-stream_network_detail <- st_sf(do.call(rbind, stream_network_detail_list))
+stream_network_detail <- st_sf(do.call(rbind, stream_network_detail_list)) %>% 
+  group_by(blue_line_key) %>% 
+  mutate(stream_order_max = max(stream_order)) %>% 
+  ungroup()
 
 network_unioned <-
   stream_network_detail %>%
@@ -167,7 +170,6 @@ nechako_chilako_intersection <-
   filter(wscode_ltree == "100.567134") %>% 
   mutate(distance = st_distance(., network_intersection_points[1, ])) %>% 
   drop_units() %>% 
-  filter(distance < 400) %>% 
   filter(edge_type != 1250) %>%
   arrange(downstream_route_measure) %>%
   slice_head(n = 2) %>% 
@@ -463,7 +465,6 @@ connectivity_ps <-
     by = c("compare" = "segment_id")
   )
 
-
 ggplot() +
   geom_sf(data = segments, aes(colour = fct_shuffle(segment_id))) +
   geom_sf(data = network_intersection_points, size = 0.3) +
@@ -610,8 +611,7 @@ total_hydrologic_distance <-
 # Checked by plotting
 # Segment 11 (100.567134.179319.0000S2) had some strange behaviour with this method
 # So taking its 7th point.
-
-segments %<>% 
+segments %<>%
   rowwise() %>% 
   group_split() %>% 
   map(
@@ -627,6 +627,7 @@ segments %<>%
           suppressWarnings()
       }
       area <- hydroshed(seg_point$Longitude, seg_point$Latitude) %>% 
+        st_make_valid() %>% 
         st_area()
       x$area <- area
       x
@@ -717,6 +718,10 @@ euclidean_distance <-
 rownames(euclidean_distance) <- points$site
 colnames(euclidean_distance) <- points$site
 
+ggplot() +
+  geom_sf(data = network_unioned) + 
+  geom_sf(data = points)
+
 sbf_set_sub("distance", "temp")
 # Save distance matrices
 sbf_save_object(downstream_hydrologic_distance, "downstream_hydrologic_distance")
@@ -726,9 +731,9 @@ sbf_save_object(euclidean_distance, "euclidean_distance")
 sbf_save_object(weight_matrix, "weight_matrix")
 sbf_save_object(flow_connected, "flow_connected")
 
-### Compare distance matrix to that from openSTARS
-# dist <- readRDS("~/Analyses/fish-passage-22/nc.ssn/distance/obs/dist.net157.RData")
-# sbf_save_object(dist, "openstars_distance")
-# 
-# downstream_hydrologic_distance %>% view()
-# dist %>% view()
+sbf_save_data(network_unioned, "stream_network")
+sbf_save_data(points, "points")
+
+if (FALSE) {
+  sbf_compare_data_archive()
+}

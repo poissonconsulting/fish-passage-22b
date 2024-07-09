@@ -3,57 +3,41 @@ source("header.R")
 sbf_set_sub("clean", "air-temp")
 sbf_load_datas()
 
-sites <- sbf_load_data("sites", sub = "tidy/water-temp")
+water_temp_site <- sbf_load_data("water_temp_site", sub = "tidy/water-temp")
+water_temp_site_upstream <- sbf_load_data("water_temp_site_upstream", sub = "tidy/water-temp")
 
-air_temp <- 
-  air_temp %>% 
-  group_by(date, longitude, latitude) %>% 
-  summarize(mean_temp = mean(temp), .groups = "keep") %>% 
-  select(date, longitude, latitude, mean_temp) %>% 
-  rename(
-    Longitude = longitude,
-    Latitude = latitude
+air_temp %<>%
+  group_by(longitude, latitude) %>% 
+  mutate(
+    cell_id = cur_group_id(),
+    cell_id = as.character(cell_id)
   ) %>% 
-  ps_longlat_to_sfc() %>% 
-  ps_sfcs_to_crs(crs = crs)
+  ungroup()
 
-### Get long/lat closest to water temp sites
-air_temp_geom <- 
+air_temp_site <- 
   air_temp %>% 
-  distinct(geometry) %>% 
-  select(geometry)
+  select(cell_id, Longitude = longitude, Latitude = latitude) %>% 
+  distinct() %>% 
+  arrange(cell_id) %>% 
+  ps_longlat_to_sfc()
 
-site_to_temp <- 
-  ps_nearest_feature(sites, air_temp_geom, dist_col = "dist") %>% 
-  rename(
-    geom_site = geometry,
-    geom_temp = geometry.y,
+# Filter to areas closest to water temp sites
+closest_site_water_temp <- 
+  ps_nearest_feature(water_temp_site, air_temp_site, dist_col = "dist") %>% 
+  as_tibble() %>% 
+  select(site, cell_id, dist)
+
+max_dist <- max(closest_site_water_temp$dist)
+message("maximum distance between grid and water temp sites: ", max_dist, " m")
+
+air_temp %<>%
+  filter(cell_id %in% closest_site_water_temp$cell_id) %>%
+  left_join(closest_site_water_temp, by = "cell_id", relationship = "many-to-many") %>%
+  select(
+    cell_id, site, air_temp, date, time
   )
 
-air_temp <- 
-  air_temp %>% 
-  filter(geometry %in% site_to_temp$geom_temp) %>% 
-  ps_sfc_to_coords() %>% 
-  as_tibble()
-
-site_to_temp <- 
-  site_to_temp %>% 
-  select(-geom_site) %>% 
-  ps_activate_sfc(sfc_name = "geom_temp") %>% 
-  ps_sfc_to_coords() %>% 
-  as_tibble() %>% 
-  select(site, dist, X, Y)
-
-air_temp <- 
-  air_temp %>% 
-  left_join(
-    site_to_temp, 
-    by = c("X", "Y"), 
-    relationship = "many-to-many"
-  ) %>% 
-  rename(x = X, y = Y, dist_from_site = dist)
-
-rm(air_temp_geom, site_to_temp, sites)
+rm(max_dist, closest_site_water_temp, water_temp_site)
 
 sbf_set_sub("tidy", "air-temp")
 sbf_save_datas()
