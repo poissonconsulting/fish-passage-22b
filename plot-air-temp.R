@@ -1,15 +1,14 @@
 source("header.R")
 
-sbf_set_sub("tidy", "air-temp")
+sbf_set_sub("query")
 sbf_load_datas()
 
-gp <- ggplot(air_temp, aes(x = date, y = mean_temp)) +
-  geom_point(size = 0.1) +
-  geom_line(linewidth = 0.1) +
+gp <- ggplot(air_temp, aes(x = date, y = air_temp)) +
+  geom_line(linewidth = 0.1, alpha = 0.7) +
   scale_x_date() +
   facet_wrap(~site) +
   xlab("Date") +
-  ylab("Air temperature (˚C)") +
+  ylab(expression(paste("Air Temperature (", degree, "C)"))) +
   NULL
 
 sbf_open_window(8, 6)

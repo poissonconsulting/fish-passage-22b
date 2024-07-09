@@ -23,6 +23,6 @@ sbf_print(gp)
 
 sbf_save_plot(
   x_name = "temp_sites",
-  report = TRUE,
+  report = FALSE,
   caption = "Water temperature (˚C) by date and site"
 )

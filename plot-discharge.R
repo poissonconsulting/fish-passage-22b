@@ -12,7 +12,7 @@ discharge %<>%
 
 gp <- ggplot(discharge) +
   geom_line(aes(x = date, y = discharge, colour = station_id, group = station_id), alpha = 0.2) +
-  ylab(expression("Discharge"~(m^3/s))) +
+  ylab("Discharge") +
   xlab("Date") +
   labs(colour = "Station ID") +
   theme(legend.position = "none") +
