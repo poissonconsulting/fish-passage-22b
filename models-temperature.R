@@ -75,7 +75,6 @@ model <- model(
       # Predict over range of H values (total hydrologic distance)
       eTD[i] <- sigma_td^2 * exp(-3 * H[i] / alpha_td) # Flow-unconnected just sums distance to common confluence
       fit[i] <- eTemp[i]
-      residual[i] <- res_norm(water_temp[i], eTemp[i], sigma_td + sigma_nug)
     }",
   new_expr_vec = TRUE,
   derived = c(
