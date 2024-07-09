@@ -67,13 +67,14 @@ gsdd <-
   coef()
 
 gp <- ggplot(gsdd) +
-  geom_pointrange(aes(x = annual, y = estimate, ymin = lower, ymax = upper)) +
+  geom_pointrange(aes(x = annual, y = estimate, ymin = lower, ymax = upper), size = 0.3) +
   facet_wrap(~site) +
   xlab("Year") +
   ylab("GSDD") +
+  guides(x = guide_axis(angle = 45)) +
   NULL
 
-sbf_open_window()
+sbf_open_window(5)
 sbf_print(gp)
 
 sbf_save_plot(

@@ -60,7 +60,8 @@ gp <- ggplot(air_temp) +
       x = air_temp,
       y = water_temp
     ),
-    alpha = 0.3
+    alpha = 0.3,
+    size = 0.5
   ) +
   facet_wrap(~site) +
   xlab(expression(paste("Air Temperature (", degree, "C)"))) +
@@ -91,7 +92,7 @@ water_temp <- predict(analysis, new_data = data, term = "eTemp")
 gp <- ggplot(water_temp, aes(x = date)) +
   geom_ribbon(aes(ymin = lower, ymax = upper), fill = pois_cols("grey")) +
   geom_line(aes(y = estimate), linewidth = 0.2) +
-  geom_point(data = data, aes(y = water_temp), colour = pois_cols("red"), alpha = 0.5) +
+  geom_point(data = data, aes(y = water_temp), colour = pois_cols("red"), alpha = 0.3, size = 0.5) +
   facet_wrap(~site, nrow = 8) + 
   xlab("Date") +
   ylab(expression(paste("Water Temperature (", degree, "C)"))) +
