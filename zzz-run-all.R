@@ -11,7 +11,7 @@ source("read-flow-diagrams.R")
 source("read-dags.R")
 
 # Download data? 
-download <- FALSE  # This uses previously downloaded versions in Dropbox
+download <- FALSE  # This uses previously downloaded versions of data in Dropbox
 # download <- TRUE   # This programatically downloads data
 if (download) {
   # Downloads stream temperature data
@@ -47,11 +47,9 @@ source("SSN-distances-temp.R")
 source("prepare-data.R")
 
 source("manipulate-temperature.R")
-source("analyse-temperature.R") 
+source("analyse-temperature.R")
 source("predict-temperature.R")
-source("residuals-temperature.R")
 source("sensitivity-temperature.R")
-
 source("predict-gsdd.R")
 
 if(FALSE) {
