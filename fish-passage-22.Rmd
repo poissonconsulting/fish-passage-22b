@@ -1,6 +1,6 @@
 ---
 title: "fish-passage 2022"
-author: "Thorley, J.L., Irvine, R.L., Dalgarno, S., Amies-Galonski, E.C., Pearson, A.D., Hussein N. & Kortello, A."
+author: "Hill, N.H., Thorley, J.L., & Irvine, A."
 bibliography: bibliography.bib
 ---
   
@@ -17,11 +17,13 @@ rename <- c(
 )
 
 sort <- c(
+  "discharge-simple", "discharge",
+  "baseline", "precip", "snowmelt", "obs_vs_preds",
   "description", "coef", "glance", "map",
   "sensitivity", "sensitivity_parameter", "sensitivity_term"
 )
 
-drop <- NULL
+drop <- c("baseline")
 ```
 
 ```{r}
@@ -37,16 +39,24 @@ cat(report_citation(file_name()))
 ## Background
 
 The primary goal of the current analyses is to answer the following questions:
-  
-  > Is y affected by x?
+
+  > How can we model stream temperature to include spatial correlation through the stream network?
   
 ### Data Preparation
   
+Sub-hourly water temperature data collected in the Nechako Watershed in northern British Columbia between 2019 and 2021 were downloaded as csv files from [here]([https://zenodo.org/records/6426024#.ZEAqr-zMI0Q) [@morris_sub-hourly_2022].
+
+Hourly two metre air temperature data for the Nechako Watershed for the years 2019-2021 were downloaded from the [ERA-5-Land simulation](https://cds.climate.copernicus.eu/cdsapp#!/dataset/10.24381/cds.e2161bac?tab=overview) using the Copernicus Climate Change Service (C3S) Climate Data Store as NetCDF files [@munoz_sabater_era5-land_2019].
+
+Daily baseflow and surface runoff data for the Nechako Watershed for the years 2019-2021 using the ACCESS1-0_rcp85 climate scenario were downloaded from the [Pacific Climate Impacts Consortium's Gridded Hydrologic Model Output](https://www.pacificclimate.org/data/gridded-hydrologic-model-output) as NetCDF files [@pacific_climate_impacts_consortium_university_of_victoria_gridded_2020].
+
 The data were prepared for analysis using `r substr(R.version.string,1,15)` [@r_core_team_r_2022].
 
 Key assumptions of the data preparation included:
   
-- The data were recorded correctly.
+- All stream temperature data were included, except those flagged "Fail" (see @gilbert_sub-hourly_2022 for details).
+- The simulated air temperature and discharge data from their respective modeled simulations are reasonable approximations of the truth.
+- Discharge for each grid cell is the sum of the baseflow and runoff in that cell.
 
 ### Statistical Analysis
 
@@ -54,41 +64,71 @@ Model parameters were estimated using Bayesian methods.
 The estimates were produced using JAGS [@plummer_jags:_2003] and STAN [@carpenter_stan_2017].
 For additional information on Bayesian estimation the reader is referred to @mcelreath_statistical_2020.
 
-Unless stated otherwise, the Bayesian analyses used weakly informative normal and half-normal prior distributions [@gelman_prior_2017].
+Unless stated otherwise, the Bayesian analyses used weakly informative prior distributions [@gelman_prior_2017].
 The posterior distributions were estimated from `r getOption("mb.nchains", 3L) * getOption("mb.niters", 500L) ` Markov Chain Monte Carlo (MCMC) samples thinned from the second halves of `r getOption("mb.nchains", 3L)` chains [@kery_bayesian_2011, pp. 38-40].
 Model convergence was confirmed by ensuring that the potential scale reduction factor $\hat{R} \leq `r round(getOption("mb.rhat", 1.05), 2)`$ [@kery_bayesian_2011, pp. 40] and the effective sample size [@brooks_handbook_2011] $\textrm{ESS} \geq  `r getOption("mb.nchains", 3L) * getOption("mb.niters", 500) * round(getOption("mb.esr", 0.1), 2)`$ for each of the monitored parameters [@kery_bayesian_2011, pp. 61].
 
 Model adequacy was assessed via posterior predictive checks [@kery_bayesian_2011].
-More specifically, the proportion of zeros in the data and the first four central moments (mean, variance, skewness and kurtosis) in the deviance residuals were compared to the expected values by simulating new data based on the posterior distribution and assumed sampling distribution and calculating the deviance residuals.
+More specifically, the proportion of zeros in the data and the first four central moments (mean, variance, skewness and kurtosis) of the deviance residuals were compared to the expected values by simulating new data based on the posterior distribution and assumed sampling distribution and calculating the deviance residuals.
 
-Where computationally practical, the sensitivity of the posteriors to the choice of prior distributions was evaluated by increasing the standard deviations of all normal, half-normal and log-normal priors by an order of magnitude and then using $\hat{R}$ to evaluate whether the samples were drawn from the same posterior distribution [@thorley_fishing_2017].
+Where computationally practical, the sensitivity of the posteriors to the choice of prior distributions was evaluated by doubling the standard deviations of the priors and then using $\hat{R}$ to evaluate whether the samples were drawn from the same posterior distribution [@thorley_fishing_2017].
 
 The parameters are summarised in terms of the point *estimate*, *lower* and *upper* 95% compatibility limits [@rafi_semantic_2020] and the surprisal *s-value* [@greenland_valid_2019].
+Together a pair of lower and upper compatibility limits (CLs) are referred to as a compatibility interval (CI).
 The estimate is the median (50th percentile) of the MCMC samples while the 95% CLs are the 2.5th and 97.5th percentiles.
 The s-value indicates how surprising it would be to discover that the true value of the parameter is in the opposite direction to the estimate [@greenland_valid_2019].
-An s-value of $>$ 4.32 bits, which is equivalent to a p-value $<$ 0.05 [@kery_bayesian_2011; @greenland_living_2013], indicates that the surprise would be equivalent to throwing at least 4.3 heads in a row.
+An s-value of $>$ 4.32 bits, which is equivalent to a p-value $<$ 0.05 [@kery_bayesian_2011; @greenland_living_2013], indicates that the surprise would be equivalent to throwing at least 4.3 heads in a row on a fair coin.
 
-Model selection was based on the pointwise out-of-sample predictive accuracy [@mcelreath_statistical_2020] or the heuristic of directional certainty [@kery_bayesian_2011].
-In the first instance, alternative models were compared using Leave-one-out cross-validation (LOO-CV) as implemented using the Pareto-smoothed importance sampling (PSIS) algorithm [@vehtari_practical_2017]. 
-LOO-CV is asymptotically equal to the Widely Applicable Information Criterion [WAIC, @watanabe_asymptotic_2010, @watanabe_widely_2013].
-Model weights ($w_i$) were based on $\exp(-0.5 \Delta_i)$ as proposed by @akaike_likelihood_1978 for Akaike Information Criterion (AIC) and by @watanabe_asymptotic_2010 for WAIC where $\Delta_i$ is the absolute difference in the out-of-sample predictive density of the $i$th model relative to the best model [@burnham_model_2002].
-In the second instance fixed effects were included if their s-value was $>$ 4.32 bits [@kery_bayesian_2011].
-Based on a similar argument, random effects were included if their standard deviation had lower 95% CLs $>$ 5% of the estimate.
+Variable selection was based on the heuristic of directional certainty [@kery_bayesian_2011, @murtaugh_defense_2014, @castilho_towards_2021].
+Fixed effects were included if their s-value was $>$ 4.32 bits [@kery_bayesian_2011].
+Based on a similar argument, random effects were included if their standard deviation had a lower 95% CL $>$ 5% of the median estimate.
 
 The results are displayed graphically by plotting the modeled relationships between individual variables and the response with the remaining variables held constant.
-In general, continuous and discrete fixed variables are held constant at their mean and first level values, respectively, while random variables are held constant at their average values (expected values of the underlying hyperdistributions) [@kery_bayesian_2011, pp. 77-82].
-Primary explanatory variables are evaluated based on their estimated effect sizes with 95% CLs [@bradford_using_2005]
+In general, continuous and discrete fixed variables are held constant at their arithmetic mean and first level values, respectively, while random effects are held constant at their typical value [@kery_bayesian_2011, pp. 77-82].
+Unless stated otherwise the typical value is the arithmetic mean.
+When informative the influence of a particular variables is expressed in terms of the *effect size* (i.e., relative change in the response variable) with the 95% CI [@bradford_using_2005].
 
-The analyses were implemented using `r substr(R.version.string,1,15)` [@r_core_team_r_2022] and the [`mbr`](https://www.poissonconsulting.ca/mbr) family of packages.
+The analyses were implemented using `r substr(R.version.string,1,15)` [@r_core_team_r_2022] and the [`embr`](https://github.com/poissonconsulting/embr) family of packages.
 
 ### Model Descriptions
 
-#### Model
+#### Stream Temperature
 
-The data were analysed using a model.
+The data were analysed using a Spatial Stream Network model [@ver_hoef_moving_2010; @peterson_mixedmodel_2010], using code adapted from the [`SSNbayes`](https://github.com/EdgarSantos-Fernandez/SSNbayes) package [@santos-fernandez_bayesian_2022].
+The necessary stream network distances were computed using the BC Freshwater Atlas. 
+Air and stream temperature data were averaged by site and week; modeling was done on this weekly time scale.
+
+Preliminary analysis found that the best relationship for predicting stream temperature at each of the sites was using a logistic curve as a function of air temperature [@mohseni_nonlinear_1998].
+
+This model takes the following form:
+
+\begin{equation}
+T_s = \frac{\alpha}{1 + e^{\gamma(\beta - T_a)}}
+\end{equation}
+
+where $T_s$ is the stream temperature and $T_a$ is the air temperature (both in ˚C), $\alpha$ is the maximum stream temperature, $\gamma$ is a measure of the steepest slope of the function, and $\beta$ is the air temperature at the inflection point of the curve.
+
+Growing Season Degree Days (GSDD) are the accumulated thermal units (in ˚C) during the growing season based on the mean daily water temperature values, and is a useful predictor of age-0 trout size at the beginning of winter.
+The start and end of the growing season were defined based on the definitions of Coleman and Fausch @coleman_cold_2007:
+
+- Start: the beginning of the first week that average stream temperatures exceeded and remained above 5˚C for the season. 
+- End: the last day of the first week that average stream temperature dropped below 4˚C.
+
+GSDD were derived for each site and year by assuming that the daily stream temperatures at each site were the predicted weekly mean stream temperature for every day in the given week.
+
 Key assumptions of the model include:
-  
-- The residual variation is normally distributed.
+
+- The stream network is dendritic, not braided.
+- The parameters of the logistic curve ($\alpha$, $\beta$, and $\gamma$) vary randomly by site; these random effects are correlated with one another.
+- The residual variation is multivariate normally distributed.
+- The covariance structure of the residual variation combines the following covariance components:
+  - Nugget (allows for variation at a single location) 
+  - Exponential tail-down (allows spatial dependence between flow-connected and flow-unconnected locations)
+
+Preliminary analysis found that:
+
+- The exponential tail-down model was better at explaining the spatial correlation in the data than exponential tail-up or euclidean distance models [@ver_hoef_moving_2010; @peterson_mixedmodel_2010].
+- Accounting for temporal autocorrelation, using fixed effects of the logistic parameters ($\alpha$, $\beta$, and $\gamma$), and adding an extra parameter to estimate a non-zero minimum stream temperature each produced worse fits of the logistic curve to the stream temperature data.
 
 ### Model Templates
 
@@ -114,8 +154,7 @@ cat(sbr_figures(sort = sort, rename = rename, nheaders = nheaders, drop = drop))
 
 The organisations and individuals whose contributions have made this analytic appendix possible include:
   
-- A Company
-  - FirstName LastName
-- FirstName LastName
+- Hillcrest Geographics
+  - Simon Norris
 
 ## References
