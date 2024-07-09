@@ -17,8 +17,6 @@ rename <- c(
 )
 
 sort <- c(
-  "discharge-simple", "discharge",
-  "baseline", "precip", "snowmelt", "obs_vs_preds",
   "description", "coef", "glance", "map",
   "sensitivity", "sensitivity_parameter", "sensitivity_term"
 )
@@ -95,7 +93,7 @@ The analyses were implemented using `r substr(R.version.string,1,15)` [@r_core_t
 #### Stream Temperature
 
 The data were analysed using a Spatial Stream Network model [@ver_hoef_moving_2010; @peterson_mixedmodel_2010], using code adapted from the [`SSNbayes`](https://github.com/EdgarSantos-Fernandez/SSNbayes) package [@santos-fernandez_bayesian_2022].
-The necessary stream network distances were computed using the BC Freshwater Atlas. 
+The necessary stream network distances and connectivity were calculated using the BC Freshwater Atlas. 
 Air and stream temperature data were averaged by site and week; modeling was done on this weekly time scale.
 
 Preliminary analysis found that the best relationship for predicting stream temperature at each of the sites was using a logistic curve as a function of air temperature [@mohseni_nonlinear_1998].
@@ -108,7 +106,7 @@ T_s = \frac{\alpha}{1 + e^{\gamma(\beta - T_a)}}
 
 where $T_s$ is the stream temperature and $T_a$ is the air temperature (both in ˚C), $\alpha$ is the maximum stream temperature, $\gamma$ is a measure of the steepest slope of the function, and $\beta$ is the air temperature at the inflection point of the curve.
 
-Growing Season Degree Days (GSDD) are the accumulated thermal units (in ˚C) during the growing season based on the mean daily water temperature values, and is a useful predictor of age-0 trout size at the beginning of winter.
+Growing Season Degree Days (GSDD) are the accumulated thermal units (in ˚C) during the growing season based on the mean daily water temperature values, which is a useful predictor of age-0 trout size at the beginning of winter.
 The start and end of the growing season were defined based on the definitions of Coleman and Fausch @coleman_cold_2007:
 
 - Start: the beginning of the first week that average stream temperatures exceeded and remained above 5˚C for the season. 
@@ -123,7 +121,7 @@ Key assumptions of the model include:
 - The residual variation is multivariate normally distributed.
 - The covariance structure of the residual variation combines the following covariance components:
   - Nugget (allows for variation at a single location) 
-  - Exponential tail-down (allows spatial dependence between flow-connected and flow-unconnected locations)
+  - Exponential tail-down (allows for spatial dependence between flow-connected and flow-unconnected locations)
 
 Preliminary analysis found that:
 
