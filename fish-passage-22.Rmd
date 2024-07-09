@@ -18,7 +18,9 @@ rename <- c(
 
 sort <- c(
   "description", "coef", "glance", "map",
-  "sensitivity", "sensitivity_parameter", "sensitivity_term"
+  "sensitivity", "sensitivity_parameter", "sensitivity_term",
+  "covariance-distance", "air-water-temp", "water-temp",
+  "gsdd-annual-site", "gsdd-map"
 )
 
 drop <- c("baseline")
@@ -52,7 +54,7 @@ The data were prepared for analysis using `r substr(R.version.string,1,15)` [@r_
 
 Key assumptions of the data preparation included:
   
-- All stream temperature data were included, except those flagged "Fail" (see @gilbert_sub-hourly_2022 for details).
+- All stream temperature data are correct, except those flagged "Fail", which were excluded from analysis (see @gilbert_sub-hourly_2022 for details).
 - The simulated air temperature and discharge data from their respective modeled simulations are reasonable approximations of the truth.
 - Discharge for each grid cell is the sum of the baseflow and runoff in that cell.
 
