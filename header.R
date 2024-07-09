@@ -1,4 +1,11 @@
 library(poispkgs)
+library(reticulate)
+library(ncdf4)
+library(tidync)
+library(jsonlite)
+library(loo)
+library(zoo)
+library(gsdd)
 
 stopifnot(packageVersion("poispkgs") >= "0.0.1.9017")
 
@@ -22,12 +29,6 @@ rm(list = ls())
 graphics.off()
 
 source("functions.R")
-library(reticulate)
-library(ncdf4)
-library(tidync)
-library(jsonlite)
-library(loo)
-library(zoo)
 
 if (dir.exists("~/Poisson")) {
   # Poisson directory
@@ -39,7 +40,7 @@ if (dir.exists("~/Poisson")) {
 
 crs <- 3005 # BC Albers
 
-bounding_dates <- dtt_date(c("2019-07-13", "2021-10-29"))
+bounding_dates <- dtt_date(c("2019-01-01", "2021-12-31"))
 
 tz_data <- "UTC"
 tz_analysis <- "Etc/GMT+8"
