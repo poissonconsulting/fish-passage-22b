@@ -40,6 +40,7 @@ analysis$model <- update_model(
       eED[i] <- sigma_ed^2 * exp(-3 * E[i] / alpha_ed)
       log_lik[i] <- eLogLik[i]
     }",
+  new_expr_vec = TRUE
 )
 
 # Predict tail-up semivariogram
@@ -67,6 +68,10 @@ gp <- ggplot(covariance) +
 
 sbf_open_window(4, 5)
 sbf_print(gp)
+
+sbf_save_plot(
+  x_name = "covariance"
+)
 
 # Predict stream temp
 # Air temp
