@@ -13,7 +13,7 @@ coef <- coef(analysis, include_constant = FALSE, simplify = TRUE) %>%
   filter(!(str_detect(term, "y_mis")))
 
 derived_coef <- coef(analysis, param_type = "derived", include_constant = FALSE, simplify = TRUE) %>% 
-  filter(str_detect(term, "bRhoLogisticPars"))
+  filter(str_detect(term, "bRhoLogisticPars\\[(1,2|1,3|2,3)"))
 
 coef %<>% bind_rows(derived_coef) %>% arrange(term)
 
@@ -89,15 +89,15 @@ preds_vs_obs <-
 water_temp <- predict(analysis, new_data = data, term = "eTemp")
 
 gp <- ggplot(water_temp, aes(x = date)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper), colour = pois_cols("grey"), alpha = 0.5) +
-  geom_line(aes(y = estimate)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), fill = pois_cols("grey")) +
+  geom_line(aes(y = estimate), linewidth = 0.2) +
   geom_point(data = data, aes(y = water_temp), colour = pois_cols("red"), alpha = 0.5) +
-  facet_wrap(~site, nrow = 6) + 
-  xlab("Date (weekly observations)") +
+  facet_wrap(~site, nrow = 8) + 
+  xlab("Date") +
   ylab(expression(paste("Water Temperature (", degree, "C)"))) +
   NULL
 
-sbf_open_window(10, 6)
+sbf_open_window(6, 9)
 sbf_print(gp)
 
 sbf_save_plot(
