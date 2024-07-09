@@ -23,15 +23,14 @@ sbf_save_data(water_temp)
 
 # Water temp meta data
 # Downloaded programatically below
-
 download.file(
   "https://zenodo.org/record/6426024/files/NHG%20Data%20ReadMe.txt?download=1",
-  "output/data/read/water-temp/water_temp_meta_data.txt"
+  "output/data/download/water-temp/water_temp_meta_data.txt"
 )
 
 water_temp_meta_data <- 
   read_tsv(
-    "output/data/read/water-temp/water_temp_meta_data.txt", 
+    "output/data/download/water-temp/water_temp_meta_data.txt",
     skip = 3
   )
 
