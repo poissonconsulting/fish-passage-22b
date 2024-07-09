@@ -5,7 +5,7 @@ sbf_set_sub("query")
 discharge_site <- sbf_load_data("discharge_site")
 water_temp_site <- sbf_load_data("water_temp_site")
 
-points_water_temp <- 
+points_water_temp <-
   water_temp_site %>% 
   ps_sfc_to_longlat() %>% 
   group_by(site) %>% 
@@ -18,16 +18,16 @@ points_water_temp <-
   filter(!site == "SLS") %>% 
   mutate(type = "pred")
 
-points_discharge <- 
-  discharge_site %>% 
-  ps_sfc_to_longlat() %>% 
-  group_by(station_id) %>% 
-  group_split() %>% 
+points_discharge <-
+  discharge_site %>%
+  ps_sfc_to_longlat() %>%
+  group_by(station_id) %>%
+  group_split() %>%
   map(
     .f = \(x) fwa_index_point(x$Longitude, x$Latitude, tolerance = 250) %>% # Low tolerance
       mutate(site = x$station_id)
-  ) %>% 
-  do.call(rbind, .) %>% 
+  ) %>%
+  do.call(rbind, .) %>%
   mutate(type = "obs")
 
 points <- bind_rows(points_water_temp, points_discharge)
@@ -99,7 +99,10 @@ stream_network_detail_list <- map(
   )
 )
 
-stream_network_detail <- st_sf(do.call(rbind, stream_network_detail_list))
+stream_network_detail <- st_sf(do.call(rbind, stream_network_detail_list)) %>% 
+  group_by(blue_line_key) %>% 
+  mutate(stream_order_max = max(stream_order)) %>% 
+  ungroup()
 
 network_unioned <-
   stream_network_detail %>%
