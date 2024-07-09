@@ -8,8 +8,6 @@ arc_to_dd <- function(x) {
   x
 }
 
-
-
 # Check transitions that ended with a divergence
 check_div <- function(fit) {
   sampler_params <- get_sampler_params(fit, inc_warmup=FALSE)
@@ -136,8 +134,8 @@ pcic_dl_sh <- function(
   lon_min = -127.53,
   lon_max = -122.92,
   # define the date range of interest
-  date_start = "2019-07-13",
-  date_end = "2021-10-29",
+  date_start = bounding_dates[1],
+  date_end = bounding_dates[2],
   append = FALSE){
   
   # Read the JSON data into R
@@ -193,6 +191,7 @@ pcic_dl_sh <- function(
   
   path <- paste0(path.expand(dir_data), "/", str_to_lower(var), ".nc")
   
+  # figure out where jq is installed
   str <- paste0(
     "curl -o ",
     shQuote(path, type = "sh"),
@@ -213,6 +212,8 @@ pcic_dl_sh <- function(
         "#!/bin/bash",
         "\n",
         "set -euxo pipefail",
+        "\n\n",
+        if_else2(dir.exists("~/Poisson"), "export PATH=/opt/homebrew/bin:$PATH", ""),
         "\n\n\n",
         # this is how we would create the directory in the bash file if we didn't have a wack dropbox folder name. ha
         # "mkdir -p \"{dir_data}\"",
