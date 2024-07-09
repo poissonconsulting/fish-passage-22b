@@ -20,7 +20,9 @@ description <- c(
   "`var_td`" = "Variance of the tail-down covariance",
   "`sigma_td`" = "Standard deviation of the exponential tail-down covariance model",
   "`alpha_td`" = "The variance of spatially independent points",
-  "`bRhoLogisticPars`" = "Correlation matrix of logistic curve parameters",
+  "`bRhoLogisticPars[1,2]`" = "Correlation coefficient between the alpha and beta parameters",
+  "`bRhoLogisticPars[1,3]`" = "Correlation coefficient between the alpha and gamma parameters",
+  "`bRhoLogisticPars[2,3]`" = "Correlation coefficient between the beta and gamma parameters",
   "`C_td`" = "Covariance matrix of the tail-down exponential model",
   "`H`" = "Total hydrologic distance matrix",
   "`D`" = "Downstream hydrologic distance matrix",
@@ -37,7 +39,7 @@ description <- c(
   "`nsite`" = "Number of sites",
   "`nweek`" = "Number of weeks",
   "`bLRhoLogisticPars`" = "Cholesky factor of the correlation matrix for the logistic curve parameters, for efficient sampling",
-  "`eZLogisticPars`" = "Matrix with standard normal priors, for improved sampling"
+  "`eZLogisticPars`" = "Matrix with standard normal priors, for efficient sampling"
 )
 
 description <- tibble(
