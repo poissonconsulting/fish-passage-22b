@@ -6,7 +6,7 @@ sbf_create_db()
 
 sbf_load_datas(sub = "tidy/water-temp")
 sbf_load_datas(sub = "tidy/discharge2")
-sbf_load_datas(sub = "tidy/weather")
+sbf_load_datas(sub = "tidy/air-temp")
 
 sbf_execute_db("CREATE TABLE water_temp_site (
                site TEXT NOT NULL,
@@ -54,44 +54,30 @@ sbf_execute_db("CREATE TABLE water_temp (
 
 sbf_save_data_to_db(water_temp)
 
-sbf_execute_db("CREATE TABLE weather_site (
+sbf_execute_db("CREATE TABLE air_temp_site (
                cell_id TEXT NOT NULL,
                geometry BLOB NOT NULL,
                PRIMARY KEY(cell_id))")
 
-sbf_save_data_to_db(weather_site)
+sbf_save_data_to_db(air_temp_site)
 
-sbf_execute_db("CREATE TABLE weather_temp (
+sbf_execute_db("CREATE TABLE air_temp (
                cell_id TEXT NOT NULL,
                site TEXT NOT NULL,
                date TEXT NOT NULL,
                time TEXT NOT NULL,
                air_temp REAL NOT NULL,
-               evap_water REAL NOT NULL,
-               evap_total REAL NOT NULL,
-               snowmelt REAL NOT NULL,
-               runoff_subsurface REAL NOT NULL,
-               runoff_surface REAL NOT NULL,
-               net_solar_rad REAL NOT NULL,
-               precip REAL NOT NULL,
-               soil_vol_1 REAL NOT NULL,
                CHECK(
                DATE(date) IS date AND
                time == STRFTIME('%H:%M:%S', time) AND
                air_temp > -50 AND
-               air_temp < 50 AND
-               snowmelt >= 0 AND
-               runoff_subsurface >= 0 AND
-               runoff_surface >= 0 AND
-               net_solar_rad >= 0 AND
-               precip >= 0 AND 
-               soil_vol_1 > 0 
+               air_temp < 50
                ),
                PRIMARY KEY (cell_id, site, date, time),
-               FOREIGN KEY (cell_id) REFERENCES weather_site(cell_id),
+               FOREIGN KEY (cell_id) REFERENCES air_temp_site(cell_id),
                FOREIGN KEY (site) references water_temp_site(site))")
 
-sbf_save_data_to_db(weather_temp)
+sbf_save_data_to_db(air_temp)
 
 sbf_execute_db("CREATE TABLE discharge_site (
                discharge_site TEXT NOT NULL,
