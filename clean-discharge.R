@@ -1,6 +1,6 @@
 source("header.R")
 
-sbf_set_sub("read", "discharge2")
+sbf_set_sub("read", "discharge")
 sbf_load_datas()
 
 runoff %<>% 
@@ -31,5 +31,5 @@ discharge <-
 
 rm(runoff, baseflow)
 
-sbf_set_sub("clean", "discharge2", rm = TRUE)
+sbf_set_sub("clean", "discharge", rm = TRUE)
 sbf_save_datas()

@@ -1,6 +1,6 @@
 source("header.R")
 
-sbf_set_sub("clean", "discharge2")
+sbf_set_sub("clean", "discharge")
 sbf_load_datas()
 
 discharge %<>% 
@@ -17,5 +17,5 @@ discharge_site <-
   ) %>% 
   ps_longlat_to_sfc()
 
-sbf_set_sub("tidy", "discharge2", rm = TRUE)
+sbf_set_sub("tidy", "discharge", rm = TRUE)
 sbf_save_datas()

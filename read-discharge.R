@@ -26,5 +26,5 @@ origin <- str_extract(origin, "(?<=days since ).*")
 runoff %<>% # units: mm
   mutate(origin = origin)
 
-sbf_set_sub("read", "discharge2", rm = TRUE)
+sbf_set_sub("read", "discharge", rm = TRUE)
 sbf_save_datas()
