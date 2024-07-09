@@ -4,7 +4,7 @@ sbf_load_datas_from_db()
 
 water_temp <- drop_units(water_temp)
 discharge <- drop_units(discharge)
-weather_temp <- drop_units(weather_temp)
+air_temp <- drop_units(air_temp)
 
 sbf_set_sub("query")
 sbf_save_datas()
