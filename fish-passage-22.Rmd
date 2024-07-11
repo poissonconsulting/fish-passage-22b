@@ -122,7 +122,7 @@ Preliminary analysis found that:
 
 - The minimum stream temperature ($\mu$) was estimated to be close to zero with low directional certainty, so was fixed to zero to simplify the model.
 - The exponential tail-down model was better at explaining the spatial correlation in the data than exponential tail-up or euclidean distance models [@ver_hoef_moving_2010; @peterson_mixedmodel_2010].
-- Accounting for temporal autocorrelation, using fixed effects of the logistic parameters ($\alpha$, $\beta$, and $\gamma$), and adding an extra parameter to estimate a non-zero minimum stream temperature each produced worse fits of the logistic curve to the stream temperature data.
+- Accounting for temporal autocorrelation and using fixed effects of the logistic parameters ($\alpha$, $\beta$, and $\gamma$) each produced worse fits of the logistic curve to the stream temperature data.
 
 ### Model Templates
 
