@@ -97,7 +97,7 @@ gsdd_spatial <-
   
 gp1 <- ggplot(gsdd_spatial) +
   geom_sf(data = stream_network) +
-  geom_sf(aes(colour = estimate), size = 2) +
+  geom_sf(aes(colour = estimate)) +
   scale_colour_gradient(label = comma) +
   facet_grid(rows = vars(annual)) +
   labs(colour = "GSDD") +
@@ -106,7 +106,7 @@ gp1 <- ggplot(gsdd_spatial) +
 
 gp2 <- ggplot(gsdd_spatial) +
   geom_sf(data = stream_network) +
-  geom_sf(aes(colour = CI), size = 2) +
+  geom_sf(aes(colour = CI)) +
   scale_colour_gradient(label = comma) +
   facet_grid(rows = vars(annual)) +
   labs(colour = "95% CI Width") +
