@@ -101,7 +101,7 @@ T_s = \mu + \frac{\alpha - \mu}{1 + e^{\gamma(\beta - T_a)}}
 where $T_s$ is the stream temperature and $T_a$ is the air temperature (both in ˚C), $\mu$ is the minimum stream temperature, $\alpha$ is the maximum stream temperature, $\gamma$ is a measure of the steepest slope of the function, and $\beta$ is the air temperature at the inflection point of the curve.
 
 Growing Season Degree Days (GSDD) are the accumulated thermal units (in ˚C) during the growing season based on the mean daily water temperature values, which is a useful predictor of age-0 trout size at the beginning of winter.
-The start and end of the growing season were based on the definitions of Coleman and Fausch @coleman_cold_2007:
+The start and end of the growing season were based on the definitions of @coleman_cold_2007:
 
 - Start: the beginning of the first week that average stream temperatures exceeded and remained above 5˚C for the season. 
 - End: the last day of the first week that average stream temperature dropped below 4˚C.
