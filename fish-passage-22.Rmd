@@ -1,5 +1,5 @@
 ---
-title: "Spatial Stream Network Analysis of Nechako Watershed Stream Temperatures"
+title: "Spatial Stream Network Analysis of Nechako Watershed Stream Temperatures 2022"
 author: "Hill, N.H., Thorley, J.L., & Irvine, A."
 bibliography: bibliography.bib
 ---

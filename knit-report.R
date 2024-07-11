@@ -6,6 +6,4 @@ poisreport::report_to_directory()
 dir <- "~/Poisson/Clients - Transfer/New Graph"
 poisreport::report_to_directory(dir = dir)
 
-if(FALSE) {
-  if (require(poisblogdown)) poisblogdown::report_to_blogdown()
-}
+if (require(poisblogdown)) poisblogdown::report_to_blogdown()
