@@ -1,3 +1,10 @@
 install.packages("remotes")
 remotes::install_github("poissonconsulting/poispkgs",
                         upgrade = TRUE, type = "source")
+install.packages("tidync")
+install.packages("ncdf4")
+install.packages("reticulate")
+install.packages("jsonlite")
+install.packages("zoo")
+install.packages("cowplot")
+remotes::install_github("poissonconsulting/gsdd")
