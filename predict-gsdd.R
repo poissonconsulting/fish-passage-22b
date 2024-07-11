@@ -69,6 +69,7 @@ gsdd <-
 gp <- ggplot(gsdd) +
   geom_pointrange(aes(x = annual, y = estimate, ymin = lower, ymax = upper), size = 0.3) +
   facet_wrap(~site) +
+  scale_y_continuous(labels = comma) +
   xlab("Year") +
   ylab("GSDD") +
   guides(x = guide_axis(angle = 45)) +
@@ -80,7 +81,7 @@ sbf_print(gp)
 sbf_save_plot(
   x_name = "gsdd-annual-site",
   report = TRUE,
-  caption = "GSDD by year and site (with 95% CIs)"
+  caption = "Predicted GSDD by year and site (with 95% CIs)"
 )
 
 stream_network <- sbf_load_data("stream_network", sub = "distance/temp") %>% 
@@ -91,20 +92,37 @@ points <- sbf_load_data("points", sub = "distance/temp") %>%
 gsdd_spatial <-
   gsdd %>% 
   left_join(points, join_by(site)) %>% 
-  ps_activate_sfc()
+  ps_activate_sfc() %>% 
+  mutate(CI = upper - lower)
   
-gp <- ggplot() +
+gp1 <- ggplot(gsdd_spatial) +
   geom_sf(data = stream_network) +
-  geom_sf(data = gsdd_spatial, aes(colour = estimate), size = 2) +
+  geom_sf(aes(colour = estimate), size = 2) +
+  scale_colour_gradient(label = comma) +
   facet_grid(rows = vars(annual)) +
   labs(colour = "GSDD") +
+  guides(x = guide_axis(angle = 45)) +
   NULL
+
+gp2 <- ggplot(gsdd_spatial) +
+  geom_sf(data = stream_network) +
+  geom_sf(aes(colour = CI), size = 2) +
+  scale_colour_gradient(label = comma) +
+  facet_grid(rows = vars(annual)) +
+  labs(colour = "95% CI Width") +
+  guides(x = guide_axis(angle = 45)) +
+  NULL
+
+gp <- cowplot::plot_grid(
+  gp1,
+  gp2
+)
   
-sbf_open_window(4, 6)
+sbf_open_window(6, 6)
 sbf_print(gp)
 
 sbf_save_plot(
   x_name = "gsdd-map",
   report = TRUE,
-  caption = "Median GSDD estimate by year and site. The black lines are the stream network."
+  caption = "GSDD median estimate and width of 95% CI by year and site. The black lines are the stream network."
 )

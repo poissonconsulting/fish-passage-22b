@@ -5,6 +5,7 @@ library(tidync)
 library(jsonlite)
 library(zoo)
 library(gsdd)
+library(cowplot)
 
 stopifnot(packageVersion("poispkgs") >= "0.0.1.9017")
 

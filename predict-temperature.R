@@ -74,7 +74,7 @@ sbf_print(gp)
 sbf_save_plot(
   x_name = "air-water-temp",
   report = TRUE,
-  caption = "Weekly mean water temperature (˚C) by weekly mean air temperature and site (with 95% CIs). The points are the observed data."
+  caption = "Predicted weekly mean water temperature (˚C) by weekly mean air temperature and site (with 95% CIs). The points are the observed data."
 )
 
 # Plot predicted vs observed
@@ -104,5 +104,5 @@ sbf_print(gp)
 sbf_save_plot(
   x_name = "water-temp",
   report = TRUE,
-  caption = "Water temperature by date (with 95% CIs). The points are the observed data."
+  caption = "Predicted water temperature by date (with 95% CIs). The points are the observed data."
 )
