@@ -25,15 +25,6 @@ air_temp <-
     .f = \(x) {
       y <- tidync(x) %>%
         hyper_tibble()
-      
-      ncin <- nc_open(x)
-      x_origin <- ncin$dim$time$units # UTC
-      nc_close(ncin)
-      x_origin <- str_extract(x_origin, "(?<=hours since ).*")
-      
-      y <- y %>% 
-        mutate(origin = x_origin)
-      y
     }
   ) %>% 
   list_rbind()

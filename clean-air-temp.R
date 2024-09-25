@@ -7,10 +7,11 @@ air_temp %<>%
   mutate(
     air_temp = t2m - 273.15,
     air_temp = set_units(air_temp, "degree_Celsius"),
-    date_time = as_datetime(time * 60 * 60, origin = origin),
+    date_time = dtt_date_time(valid_time, tz = "UTC"),
     date_time = dtt_adjust_tz(date_time, tz = tz_analysis),
     date = dtt_date(date_time),
-    time = dtt_time(date_time)
+    time = dtt_time(date_time),
+    across(c(latitude, longitude), as.numeric)
   )
 
 # Check no months of data are missing
