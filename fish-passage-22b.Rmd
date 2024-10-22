@@ -13,7 +13,8 @@ library(poisreport)
 nheaders <- 2L
 
 rename <- c(
-  "map" = "Maps" # to avoid rendering problems!
+  "map" = "Maps", # to avoid rendering problems!
+  "temperature-air2stream" = "Stream Temperature"
 )
 
 sort <- c(
@@ -98,10 +99,10 @@ The average stream temperature (in ˚C) in the first week, $W_{s,j=1}$ was estim
 For all subsequent weeks (i.e., $j \gt 1$), the change in the stream temperature (in ˚C) between week $j - 1$ and week $j$ for the $s^{th}$ site, $\Delta W_{s,j}$, was modeled as follows:
 
 \begin{equation}
-\Delta W_{s,j} = \frac{1}{(\theta_{s,j})^{a4_s}}(a1_s + a2_s * A_{s,j} - a3_s * W_{s,j - 1}),
+\Delta W_{s,j} = \frac{1}{(\theta_{s,j})^{a4_s}}(a1_s + a2_s A_{s,j} - a3_s W_{s,j - 1}),
 \end{equation}
 
-where $a1_s$, $a2_s$, $a3_s$, and $a4_s$ are the parameters of the air2stream model for the $s^{th}$ site, $A_{s,j}$ is the air temperature (in ˚C) for the $s^{th}$ site in the $j^{th}$ week, $W_{s, j - 1}$ is the expected stream temperature for the previous week at the $s^{th}$ site, and $\theta_{s,j}$ is the dimensionless discharge.
+where $a1_s$, $a2_s$, $a3_s$, and $a4_s$ are the parameters of the air2stream model for the $s^{th}$ site, $A_{s,j}$ is the air temperature (in ˚C) for the $s^{th}$ site in the $j^{th}$ week, $W_{s, j - 1}$ is the expected stream temperature at the $s^{th}$ site in the previous week, and $\theta_{s,j}$ is the dimensionless discharge for the $s^{th}$ site in the $j^{th}$ week.
 $\theta_{s,j}$ was calculated as follows:
 
 \begin{equation}
@@ -127,7 +128,7 @@ GSDD were derived for each site and year by assuming that the daily stream tempe
 Key assumptions of the model include:
 
 - The stream network is dendritic, not braided.
-- The expected stream temperatures were set to 0˚C if they were estimated to be negative.
+- The expected stream temperatures were set to 0˚C if they were estimated to be negative by the model.
 - The stream temperature in the first week is the same for all sites.
 - The parameters of the air2stream model ($a1$, $a2$, $a3$, and $a4$) vary randomly by site.
 - The residual variation is multivariate normally distributed.
