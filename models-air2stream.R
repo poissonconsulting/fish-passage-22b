@@ -1,17 +1,10 @@
 description <- c(
-  "`eAlpha`" = "Maximum stream temperature",
-  "`bAlphaIntercept`" = "Intercept for `eAlpha`",
-  "`bLogisticPars[, 1]`" = "Effect of `site` on `bAlphaIntercept`",
-  "`eGamma`" = "Measure of the steepest slope of the function",
-  "`bGammaIntercept`" = "Intercept for `eGamma`",
-  "`bLogisticPars[, 3]`" = "Effect of `site` on `bGammaIntercept`",
-  "`eBeta`" = "Air temperature at the inflection point of the curve",
-  "`bBetaIntercept`" = "Intercept for `eBeta`",
-  "`bLogisticPars[, 2]`" = "Effect of `site` on `bBetaIntercept`",
   "`eTemp[i]`" = "Expected value of `water_temp[i]`",
-  "`y[i]`" = "The `i`^th^ water temperature value",
-  "`air_temp[i]`" = "The `i`^th^ air temperature value",
+  "`eTempDiff[i]`" = "Expected difference in average water temperature from the previous week",
+  "`y[i]`" = "The `i`^th^ water temperature value (˚C)",
+  "`air_temp[i]`" = "The `i`^th^ air temperature value (˚C)",
   "`site[i]`" = "The `i`^th^ site",
+  "`week[i]`" = "The `i`^th^ week",
   "`Y[t]`" = "Vector of water temperature values for all sites in the `t`^th^ week",
   "`mu[t]`" = "Vector of `eTemp` values for all sites in the `t`^th^ week",
   "`sigma_nug`" = "Standard deviation of the nugget effect",
@@ -20,9 +13,6 @@ description <- c(
   "`var_td`" = "Variance of the tail-down covariance",
   "`sigma_td`" = "Standard deviation of the exponential tail-down covariance model",
   "`alpha_td`" = "The variance of spatially independent points",
-  "`bRhoLogisticPars[1,2]`" = "Correlation coefficient between the alpha and beta parameters",
-  "`bRhoLogisticPars[1,3]`" = "Correlation coefficient between the alpha and gamma parameters",
-  "`bRhoLogisticPars[2,3]`" = "Correlation coefficient between the beta and gamma parameters",
   "`C_td`" = "Covariance matrix of the tail-down exponential model",
   "`H`" = "Total hydrologic distance matrix",
   "`D`" = "Downstream hydrologic distance matrix",
@@ -33,13 +23,22 @@ description <- c(
   "`N_y_mis`" = "Number of missing water temperature values",
   "`i_y_obs`" = "Indexes of observed water temperature values",
   "`i_y_mis`" = "Indexes of missing water temperature values",
-  "`sLogisticPars[1]`" = "Standard deviation of the random effect of site on `eAlpha`",
-  "`sLogisticPars[2]`" = "Standard deviation of the random effect of site on `eBeta`",
-  "`sLogisticPars[3]`" = "Standard deviation of the random effect of site on `eGamma`",
   "`nsite`" = "Number of sites",
   "`nweek`" = "Number of weeks",
-  "`bLRhoLogisticPars`" = "Cholesky factor of the correlation matrix for the logistic curve parameters, for efficient sampling",
-  "`eZLogisticPars`" = "Matrix with standard normal priors, for efficient sampling"
+  "`m1`" = "Mean of the site-wise random effect for the `a1` parameter",
+  "`m2`" = "Mean of the site-wise random effect for the `a2` parameter",
+  "`m3`" = "Mean of the site-wise random effect for the `a3` parameter",
+  "`m4`" = "Mean of the site-wise random effect for the `a4` parameter",
+  "`s1`" = "Standard deviation of the site-wise random effect for the `a1` parameter",
+  "`s2`" = "Standard deviation of the site-wise random effect for the `a2` parameter",
+  "`s3`" = "Standard deviation of the site-wise random effect for the `a3` parameter",
+  "`s4`" = "Standard deviation of the site-wise random effect for the `a4` parameter",
+  "`a1[i]`" = "Intercept-type parameter of the air2stream model for the `i`^th^ site",
+  "`a2[i]`" = "Effect of air_temp[i] on eTempDiff[i] for the `i`^th^ site",
+  "`a3[i]`" = "Effect of the previous week's expected water temperature (`eTemp[i - nsite]`) on `eTempDiff[i]`, for the `i`^th^ site",
+  "`a4[i]`" = "Effect of discharge[i] on `eTempDiff[i]` for the `i`^th^ site",
+  "`bInitialTemp`" = "Expected average water temperature for the week starting 01-01-2019 for all sites",
+  "`discharge[i]`" = "Dimensionless discharge for the `i`^th^ observation (discharge for that observation divided by the mean discharge across all observations for that site)"
 )
 
 description <- tibble(
@@ -74,39 +73,24 @@ model <- model(
       if (week[i] == 1) {
         eTemp[i] = bInitialTemp
       } else {
-        # eTempDiff[i] = (1/(discharge[i]^a4)) * (a1 + a2 * air_temp[i] - a3 * eTemp[i - nsite] + discharge[i] * (a5 + a6 * cos(2 * 3.141592654 * ((week_year[i] / max_week_year[i]) - a7)) - a8 * eTemp[i - nsite]));
-        eTempDiff[i] = (1/(discharge[i]^a4)) * (a1 + a2 * air_temp[i] - a3 * eTemp[i - nsite]);
+        eTempDiff[i] = (1/(discharge[i]^a4[site[i]])) * (a1[site[i]] + a2[site[i]] * air_temp[i] - a3[site[i]] * eTemp[i - nsite]);
         eTemp[i] = eTemp[i - nsite] + eTempDiff[i];
         if (eTemp[i] < 0) {
           eTemp[i] = 0.0;
         }
       }
-      # eTD[i] <- sigma_td^2 * exp(-3 * H[i] / alpha_td) # Flow-unconnected just sums distance to common confluence
+      eTD[i] <- sigma_td^2 * exp(-3 * H[i] / alpha_td) # Flow-unconnected just sums distance to common confluence
       fit[i] <- eTemp[i]
     }",
   new_expr_vec = FALSE,
-  # gen_inits = function(data) {
-  #   inits <- list()
-  #   # nh converging priors
-  #   inits$a1 ~ runif(1, 0, 0.6)
-  #   inits$a2 ~ runif(1, 0, 0.2)
-  #   inits$a3 ~ runif(1, 0, 0.4)
-  #   inits$a4 ~ runif(1, 0.5, 0.7)
-  #   inits$a5 ~ runif(1, 2, 6)
-  #   inits$a6 ~ runif(1, 2, 6)
-  #   inits$a7 ~ runif(1, 0.3, 0.7)
-  #   inits$a8 ~ runif(1, 0, 0.2)
-  #   # msc student
-  #   # inits$a1 ~ runif(1, 2, 2.5)
-  #   # inits$a2 ~ runif(1, 0.34, 0.5)
-  #   # inits$a3 ~ runif(1, -2, 0)
-  #   # inits$a4 ~ runif(1, 2, 4)
-  #   # inits$a5 ~ runif(1, 2, 4)
-  #   # inits$a6 ~ runif(1, 2, 4)
-  #   # inits$a7 ~ runif(1, 0.5, 0.7)
-  #   # inits$a8 ~ runif(1, 0.3, 0.8)
-  #   inits
-  # },
+  gen_inits = function(data) {
+    inits <- list()
+    inits$a1 <- runif(data$nsite, 0.4, 0.6)
+    inits$a2 <- runif(data$nsite, 0.1, 0.3)
+    inits$a3 <- runif(data$nsite, 1.5, 2.5)
+    inits$a4 <- runif(data$nsite, -0.1, 0.1)
+    inits
+  },
   select_data = list(
     site = factor(),
     week = factor(),
@@ -117,6 +101,12 @@ model <- model(
     air_temp = c(-50, 40),
     H = c(0, 50 * 5000),
     E = c(0, 50 * 500)
+  ),
+  random_effects = list(
+    a1 = "site",
+    a2 = "site",
+    a3 = "site",
+    a4 = "site"
   )
 )
 
