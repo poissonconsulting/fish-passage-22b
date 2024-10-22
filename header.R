@@ -32,10 +32,10 @@ source("functions.R")
 
 if (dir.exists("~/Poisson")) {
   # Poisson directory
-  dir <- "~/Poisson/Clients - Transfer/New Graph/fish-passage-22"
+  dir <- "~/Poisson/Clients - Transfer/New Graph/fish-passage-22b"
 } else {
   # New Graph directory
-  dir <- "~/Dropbox/New Graph/fish-passage-22"
+  dir <- "~/Dropbox/New Graph/fish-passage-22b"
 }
 
 crs <- 3005 # BC Albers
