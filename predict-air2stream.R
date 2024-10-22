@@ -54,7 +54,7 @@ gp <- ggplot(water_temp, aes(x = date)) +
   ylab(expression(paste("Water Temperature (", degree, "C)"))) +
   NULL
 
-sbf_open_window(6, 9)
+sbf_open_window(6, 8)
 sbf_print(gp)
 
 sbf_save_plot(
