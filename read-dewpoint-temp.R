@@ -10,7 +10,7 @@ source("header.R")
 dir2 <- file.path(getwd(), "output/data/dewpoint-temp")
 if (!file.exists(file.path(dir2, "2019.nc"))) {
   # Change to directory to dropbox folder if API doesn't work
-  dir2 <- file.path(dir, "Data/ERA5")
+  dir2 <- file.path(dir, "Data/ERA5/dewpoint-temp")
 }
 
 files <- list.files(dir2, full.names = TRUE) %>% 
