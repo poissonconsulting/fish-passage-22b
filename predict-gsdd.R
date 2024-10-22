@@ -46,8 +46,7 @@ full_dates_data <-
   ) %>% 
   group_by(site) %>% 
   fill(
-    week, water_temp, air_temp, discharge_site, discharge, elev, 
-    site_remains, H, E, nsite, 
+    week, water_temp, air_temp, discharge, elev, site_remains, H, E, nsite, 
     .direction = "down"
   ) %>% 
   ungroup()
