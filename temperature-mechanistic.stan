@@ -73,10 +73,10 @@ transformed parameters {
     eLongwave[i] = bLongwave * longwave_rad[i];
     eHeatLoss[i] = bHeatLoss * 0.004727079 * (eTemp[i - nsite] + 273.15)^4;
     eDischarge[i] = bDischarge * 41.8e6 * discharge[i];
-    eGroundwater[i] = bGroundwater[site[i]] * mad[i]; // bGroundwater is a proportion
+    // eGroundwater[i] = bGroundwater[site[i]] * mad[i]; // bGroundwater is a proportion
     eTempDiff[i] = (eShortwave[i] + eLongwave[i] - eHeatLoss[i]) / eDischarge[i];
     
-    if ((eTemp[i - nsite] + eTempDiff[i]) =< 0.0) { 
+    if ((eTemp[i - nsite] + eTempDiff[i]) <= 0.0) { 
       eIceReserve[i] = eIceReserve[i - nsite] + eTempDiff[i]; // the amount of temp diff below 0
       eTemp[i] = eTemp[i - nsite]; // could be 0.0
     } else {
