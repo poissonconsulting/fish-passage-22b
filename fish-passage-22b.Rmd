@@ -96,7 +96,7 @@ Air and stream temperature data were averaged by site and week; modeling was don
 The expected stream temperatures were modeled using the 4-parameter version of the air2stream model [@toffolon_hybrid_2015].
 The average stream temperature (in ˚C) in the first week, $W_{s,j=1}$ was estimated by the model and assumed to be the same for all sites.
 
-For all subsequent weeks (i.e., $j \gt 1$), the change in the stream temperature (in ˚C) between week $j - 1$ and week $j$ for the $s^{th}$ site, $\Delta W_{s,j}$, was modeled as follows:
+For all subsequent weeks (i.e., $j > 1$), the change in the stream temperature (in ˚C) between week $j - 1$ and week $j$ for the $s^{th}$ site, $\Delta W_{s,j}$, was modeled as follows:
 
 \begin{equation}
 \Delta W_{s,j} = \frac{1}{(\theta_{s,j})^{a4_s}}(a1_s + a2_s A_{s,j} - a3_s W_{s,j - 1}),
