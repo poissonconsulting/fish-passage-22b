@@ -39,7 +39,7 @@ cat(report_citation(file_name()))
 
 ## Background
 
-The primary goal of the current analyses is to answer the following questions:
+The primary goal of the current analyses is to answer the following question:
 
   > How can we model stream temperature to include spatial correlation through a stream network?
   
