@@ -41,16 +41,7 @@ sbf_save_plot(
   caption = "Tail-down covariance by hydrologic distance (with 95% CIs)"
 )
 
-# Plot predicted vs observed
-# preds_vs_obs <-
-#   data %>% 
-#   rename(estimate = water_temp) %>% 
-#   mutate(type = "obs") %>% 
-#   bind_rows(
-#     predict(analysis, new_data = data, term = "eTemp") %>% 
-#       mutate(type = "pred")
-#   )
-
+# Water temperature by site
 water_temp <- predict(analysis, new_data = data, term = "eTemp")
 
 gp <- ggplot(water_temp, aes(x = date)) +
