@@ -140,6 +140,7 @@ Preliminary analysis found that:
 
 - The exponential tail-down model was better at explaining the spatial correlation in the data than exponential tail-up or euclidean distance models [@ver_hoef_moving_2010; @peterson_mixedmodel_2010].
 - The full 8-parameter air2stream model did not converge.
+- Preliminary analysis found that allowing the initial stream temperature to vary randomly by site produced unrealistic stream temperatures for January (> 10˚C).
 
 ### Model Templates
 
