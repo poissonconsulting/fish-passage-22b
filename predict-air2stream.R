@@ -49,6 +49,7 @@ gp <- ggplot(water_temp, aes(x = date)) +
   geom_line(aes(y = estimate), linewidth = 0.2) +
   geom_point(data = data, aes(y = water_temp), colour = pois_cols("red"), alpha = 0.3, size = 0.5) +
   facet_wrap(~site, nrow = 8) + 
+  guides(x = guide_axis(angle = 45)) +
   xlab("Date") +
   ylab(expression(paste("Water Temperature (", degree, "C)"))) +
   NULL
