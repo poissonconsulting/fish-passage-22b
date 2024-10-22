@@ -52,6 +52,21 @@ gp <- ggplot(water_temp) +
 sbf_open_window(16, 8)
 sbf_print(gp)
 
+# Filter out site with just 4 obs
+message("filtering out WHC, which has 4 obs")
+sites_to_drop <- c("WHC")
+water_temp %<>% 
+  filter(!site %in% sites_to_drop) %>% 
+  mutate(
+    site = fct_drop(site)
+  )
+
+D <- D[!rownames(D) %in% sites_to_drop, !colnames(D) %in% sites_to_drop]
+W <- W[!rownames(W) %in% sites_to_drop, !colnames(W) %in% sites_to_drop]
+H <- H[!rownames(H) %in% sites_to_drop, !colnames(H) %in% sites_to_drop]
+flow_con_mat <- flow_con_mat[!rownames(flow_con_mat) %in% sites_to_drop, !colnames(flow_con_mat) %in% sites_to_drop]
+E <- E[!rownames(E) %in% sites_to_drop, !colnames(E) %in% sites_to_drop]
+
 sbf_set_sub("temperature-air2stream")
 sbf_save_data(water_temp, "data")
 sbf_save_object(D)
