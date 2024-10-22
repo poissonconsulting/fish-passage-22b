@@ -56,7 +56,7 @@ x <-
     term = "^eTemp$"
   ) %>% 
   right_join(full_dates_data, join_by(site, week)) %>% 
-  mutate(annual = dtt_year(date))
+  mutate(annual = factor(dtt_year(date)))
 
 gsdd <-
   x %>% 
