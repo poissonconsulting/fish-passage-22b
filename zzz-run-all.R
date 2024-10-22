@@ -64,21 +64,26 @@ source("prepare-data.R")
 source("plot-relationships.R")
 source("plot-relationships-spatial.R")
 
-source("manipulate-temperature.R")
-source("analyse-temperature.R")
-source("predict-temperature.R")
-source("sensitivity-temperature.R")
-source("predict-gsdd.R")
-
-source("manipulate-temperature-mechanistic.R")
-source("analyse-temperature-mechanistic.R")
-source("predict-temperature-mechanistic.R")
-source("sensitivity-temperature-mechanistic.R")
-
 source("manipulate-air2stream.R")
 source("analyse-air2stream.R")
 source("predict-air2stream.R")
 source("sensitivity-air2stream.R")
+source("predict-gsdd-air2stream.R")
+
+if (FALSE) {
+  # Logistic curve model
+  source("manipulate-temperature.R")
+  source("analyse-temperature.R")
+  source("predict-temperature.R")
+  source("sensitivity-temperature.R")
+  source("predict-gsdd.R")
+  
+  # More mechanistic model (incomplete; unrealistic predictions)
+  source("manipulate-temperature-mechanistic.R")
+  source("analyse-temperature-mechanistic.R")
+  source("predict-temperature-mechanistic.R")
+  source("sensitivity-temperature-mechanistic.R") 
+}
 
 if(FALSE) {
   source("knit-report.R")
