@@ -127,7 +127,7 @@ pcic_dl_sh <- function(
   # define the model and scenario - should seperate
   model = "ACCESS1-0_rcp85",
   # define the location of the data directory to download to
-  dir_data = "~/Dropbox/New Graph/fish-passage-22/Data/Discharge/pcic",
+  dir_data = "~/Dropbox/New Graph/fish-passage-22b/Data/Discharge/pcic",
   # Define the bounding box of the area of interest
   lat_min = 52.5,
   lat_max = 56.5,

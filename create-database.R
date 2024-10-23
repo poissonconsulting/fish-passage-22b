@@ -1,6 +1,6 @@
 source("header.R")
 
-sbf_set_db_name("fish-passage-22")
+sbf_set_db_name("fish-passage-22b")
 
 sbf_create_db()
 
