@@ -10,7 +10,7 @@ description <- c(
   "`sigma_nug`" = "Standard deviation of the nugget effect",
   "`I`" = "The identity matrix",
   "`var_nug`" = "Variance of the nugget effect",
-  "`var_td`" = "Variance of the tail-down covariance",
+  "`var_td`" = "Variance of the exponential tail-down covariance model",
   "`sigma_td`" = "Standard deviation of the exponential tail-down covariance model",
   "`alpha_td`" = "The variance of spatially independent points",
   "`C_td`" = "Covariance matrix of the tail-down exponential model",
@@ -36,7 +36,7 @@ description <- c(
   "`a1[i]`" = "Intercept-type parameter of the air2stream model for the `i`^th^ site",
   "`a2[i]`" = "Effect of `air_temp[i]` on `eTempDiff[i]` for the `i`^th^ site",
   "`a3[i]`" = "Effect of the previous week's expected water temperature (`eTemp[i - nsite]`) on `eTempDiff[i]`, for the `i`^th^ site",
-  "`a4[i]`" = "Effect of discharge[i] on `eTempDiff[i]` for the `i`^th^ site",
+  "`a4[i]`" = "Effect of `discharge[i]` on `eTempDiff[i]` for the `i`^th^ site",
   "`bInitialTemp`" = "Expected average water temperature for the week starting 01-01-2019 for all sites",
   "`discharge[i]`" = "Dimensionless discharge for the `i`^th^ observation (discharge for that observation divided by the mean discharge across all observations for that site)"
 )
