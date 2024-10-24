@@ -1,9 +1,12 @@
 source("header.R")
 
-sbf_set_sub("temperature")
+message("using subsetted data from air2stream model to do proper model comparison with WAIC")
+sbf_set_sub("temperature-air2stream")
 
 sbf_load_datas()
 sbf_load_objects()
+
+sbf_set_sub("temperature")
 
 source("models-temperature.R")
 

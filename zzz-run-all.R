@@ -83,6 +83,8 @@ if (FALSE) {
   source("analyse-temperature-mechanistic.R")
   source("predict-temperature-mechanistic.R")
   source("sensitivity-temperature-mechanistic.R") 
+  
+  source("compare-models.R")
 }
 
 if(FALSE) {

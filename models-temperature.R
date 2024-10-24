@@ -82,7 +82,8 @@ model <- model(
   derived = c(
     "y", 
     "bLogisticPars",
-    "bRhoLogisticPars"
+    "bRhoLogisticPars",
+    "log_lik"
   ),
   select_data = list(
     site = factor(),

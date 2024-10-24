@@ -91,6 +91,7 @@ model <- model(
     inits$a4 <- runif(data$nsite, -0.1, 0.1)
     inits
   },
+  derived = c("log_lik"),
   select_data = list(
     site = factor(),
     week = factor(),

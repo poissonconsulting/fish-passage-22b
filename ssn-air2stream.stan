@@ -55,6 +55,8 @@ transformed parameters {
   vector<lower=0, upper=30>[nsite * nweek] eTemp;
   vector[nsite] mu [nweek];
   
+  vector[nweek] log_lik;
+  
   y[i_y_obs] = y_obs;
   y[i_y_mis] = y_mis;
   
@@ -96,6 +98,10 @@ transformed parameters {
         C_td[i, j] = var_td * exp(-3 * (D[i, j] + D[j, i]) / alpha_td);
       }
     }
+  }
+  
+  for (t in 1:nweek) {
+    log_lik[t] = multi_normal_cholesky_lpdf(Y[t] | mu[t], cholesky_decompose(C_td + var_nug * I + 1e-6));
   }
 }
 
