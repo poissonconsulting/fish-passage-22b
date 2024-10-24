@@ -34,7 +34,7 @@ description <- c(
   "`s3`" = "Standard deviation of the site-wise random effect for the `a3` parameter",
   "`s4`" = "Standard deviation of the site-wise random effect for the `a4` parameter",
   "`a1[i]`" = "Intercept-type parameter of the air2stream model for the `i`^th^ site",
-  "`a2[i]`" = "Effect of air_temp[i] on eTempDiff[i] for the `i`^th^ site",
+  "`a2[i]`" = "Effect of `air_temp[i]` on `eTempDiff[i]` for the `i`^th^ site",
   "`a3[i]`" = "Effect of the previous week's expected water temperature (`eTemp[i - nsite]`) on `eTempDiff[i]`, for the `i`^th^ site",
   "`a4[i]`" = "Effect of discharge[i] on `eTempDiff[i]` for the `i`^th^ site",
   "`bInitialTemp`" = "Expected average water temperature for the week starting 01-01-2019 for all sites",
