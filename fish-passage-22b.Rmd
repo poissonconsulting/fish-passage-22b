@@ -47,7 +47,7 @@ The primary goal of the current analyses is to answer the following question:
   
 Sub-hourly water temperature data collected in the Nechako Watershed in northern British Columbia between 2019 and 2021 were downloaded as csv files from [Zenodo](https://zenodo.org/records/6426024#.ZEAqr-zMI0Q) [@morris_sub-hourly_2022].
 
-Hourly two metre air temperature data for the Nechako Watershed for the years 2019-2021 were downloaded from the [ERA-5-Land simulation](https://cds.climate.copernicus.eu/cdsapp#!/dataset/10.24381/cds.e2161bac?tab=overview) using the Copernicus Climate Change Service (C3S) Climate Data Store as NetCDF files [@munoz_sabater_era5-land_2019].
+Hourly air temperature data (at two metres above ground level) for the Nechako Watershed for the years 2019-2021 were downloaded from the [ERA-5-Land simulation](https://cds.climate.copernicus.eu/cdsapp#!/dataset/10.24381/cds.e2161bac?tab=overview) using the Copernicus Climate Change Service (C3S) Climate Data Store as NetCDF files [@munoz_sabater_era5-land_2019].
 
 Daily baseflow and surface runoff data for the Nechako Watershed for the years 2019-2021 using the ACCESS1-0_rcp85 climate scenario were downloaded from the [Pacific Climate Impacts Consortium's Gridded Hydrologic Model Output](https://www.pacificclimate.org/data/gridded-hydrologic-model-output) as NetCDF files [@pacific_climate_impacts_consortium_university_of_victoria_gridded_2020].
 
@@ -57,8 +57,8 @@ Key assumptions of the data preparation included:
   
 - All stream temperature data are correct, except those flagged "Fail", which were excluded from analysis (see @gilbert_sub-hourly_2022 for details).
 - The simulated air temperature and discharge data from their respective modeled simulations are reasonable approximations of the truth.
-- The daily discharge at each stream temperature site was calculated by taking the weighted average of the sum of the baseflow and runoff for the watershed area upstream of the site and dividing by the number of seconds in a day; these were then averaged over weekly periods for each site.
-- One site with just four weeks of observed stream temperature proved insufficient to capture the annual-scale fluctuations in stream temperature; this site (WHC) was dropped from the analysis.
+- The daily discharge at each stream temperature site was calculated by taking the weighted average of the sum of the baseflow and runoff for the watershed area upstream of the site; these were then averaged over weekly periods for each site.
+- One site that corresponded to just four consecutive observed data points proved insufficient to capture the annual-scale fluctuations in stream temperature; this site (WHC) was dropped from the analysis.
 - There were 146 observations with negative stream temperatures measurements, which were all set to 0˚C.
 
 ### Statistical Analysis
@@ -117,7 +117,7 @@ The expected stream temperature for the $s^{th}$ site in the $j^{th}$ week was t
 W_{s,j} = W_{s,j - 1} + \Delta W_{s,j}.
 \end{equation}
 
-Growing Season Degree Days (GSDD) are the accumulated thermal units (in ˚C) during the growing season based on the mean daily water temperature values, which is a useful predictor of age-0 trout size at the beginning of winter.
+Growing Season Degree Days (GSDD) are the accumulated thermal units (in ˚C) during the growing season based on the mean daily water temperature values, which is a useful predictor of age-0 rainbow and westslope cutthroat trout size at the beginning of winter.
 The start and end of the growing season were based on the definitions of @coleman_cold_2007:
 
 - Start: the beginning of the first week that average stream temperatures exceeded and remained above 5˚C for the season. 
