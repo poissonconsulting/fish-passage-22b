@@ -169,4 +169,6 @@ The organisations and individuals whose contributions have made this analytic ap
 - Hillcrest Geographics
   - Simon Norris
 
+\newpage
+
 ## References
