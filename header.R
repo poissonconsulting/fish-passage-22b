@@ -28,6 +28,8 @@ set_analysis_mode("report")
 rm(list = ls())
 graphics.off()
 
+sbf_set_db_name("fish-passage-22b")
+
 source("functions.R")
 
 if (dir.exists("~/Poisson")) {

@@ -1,7 +1,5 @@
 source("header.R")
 
-sbf_set_db_name("fish-passage-22b")
-
 sbf_create_db()
 
 sbf_load_datas(sub = "tidy/water-temp")
